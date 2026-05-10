@@ -100,15 +100,16 @@ jobs:
           PY
 
   no-leftover-rename:
-    name: No 'iot_custom' references survived
+    name: No 'iot_custom' module references survived
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: |
+      - name: grep -w only matches whole words (skips iot_customer_display_id etc.)
+        run: |
           fail=0
           for a in $ADDONS; do
-              if grep -RIn 'iot_custom' "$a" 2>&1; then
-                  echo "::error::'iot_custom' string found in $a/"
+              if grep -wRIn 'iot_custom' "$a" 2>&1; then
+                  echo "::error::'iot_custom' module reference found in $a/"
                   fail=1
               fi
           done
