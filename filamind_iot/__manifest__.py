@@ -1,6 +1,6 @@
 {
     'name': 'Filamind IoT',
-    'version': '19.0.1.0.0',
+    'version': '19.0.2.0.0',
     'category': 'Productivity/IoT',
     'summary': 'Self-hosted IoT gateway for Odoo — pairs with the filamind-iotbox image',
     'description': """
@@ -28,7 +28,7 @@ Key Features
     """,
     'author': 'filamind',
     'website': 'https://github.com/filamind-app/filamind-iot',
-    'depends': ['base', 'mail', 'web'],
+    'depends': ['base', 'mail', 'web', 'bus'],
     'data': [
         'security/iot_security.xml',
         'security/ir.model.access.csv',
@@ -40,6 +40,7 @@ Key Features
         'views/iot_box_views.xml',
         'views/iot_device_views.xml',
         'views/iot_connection_log_views.xml',
+        'views/iot_command_queue_views.xml',
         'views/iot_config_settings_views.xml',
         'views/iot_menus.xml',
     ],

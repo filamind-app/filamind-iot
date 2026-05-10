@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_iot_command_queue_list" model="ir.ui.view">
+        <field name="name">iot.command.queue.list</field>
+        <field name="model">iot.command.queue</field>
+        <field name="arch" type="xml">
+            <list string="Commands"
+                  decoration-success="state == 'completed'"
+                  decoration-info="state in ('pending','sent')"
+                  decoration-danger="state == 'failed'"
+                  decoration-muted="state == 'timeout'">
+                <field name="create_date"/>
+                <field name="iot_box_id"/>
+                <field name="device_id"/>
+                <field name="method"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'completed'"
+                       decoration-info="state in ('pending','sent')"
+                       decoration-danger="state == 'failed'"/>
+                <field name="sent_at" optional="show"/>
+                <field name="completed_at" optional="show"/>
+                <field name="error" optional="hide"/>
+                <field name="company_id" optional="hide"
+                       groups="base.group_multi_company"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_iot_command_queue_form" model="ir.ui.view">
+        <field name="name">iot.command.queue.form</field>
+        <field name="model">iot.command.queue</field>
+        <field name="arch" type="xml">
+            <form string="Command" create="false">
+                <header>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="pending,sent,completed"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Failed" bg_color="bg-danger"
+                            invisible="state != 'failed'"/>
+                    <widget name="web_ribbon" title="Timed Out" bg_color="bg-secondary"
+                            invisible="state != 'timeout'"/>
+                    <div class="oe_title">
+                        <label for="name" string="Session ID"/>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="iot_box_id" readonly="1"/>
+                            <field name="device_id" readonly="1"/>
+                            <field name="method" readonly="1"/>
+                            <field name="timeout_seconds" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="sent_at" readonly="1"/>
+                            <field name="completed_at" readonly="1"/>
+                            <field name="error" readonly="1"/>
+                            <field name="company_id" readonly="1"
+                                   groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Request Payload" name="request">
+                            <field name="request_payload" widget="ace"
+                                   options="{'mode': 'json'}" readonly="1"/>
+                        </page>
+                        <page string="Response Payload" name="response"
+                              invisible="state in ('pending','sent')">
+                            <field name="response_payload" widget="ace"
+                                   options="{'mode': 'json'}" readonly="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_iot_command_queue_search" model="ir.ui.view">
+        <field name="name">iot.command.queue.search</field>
+        <field name="model">iot.command.queue</field>
+        <field name="arch" type="xml">
+            <search string="Commands">
+                <field name="iot_box_id"/>
+                <field name="device_id"/>
+                <field name="method"/>
+                <filter string="In Flight" name="inflight"
+                        domain="[('state', 'in', ['pending','sent'])]"/>
+                <filter string="Completed" name="completed"
+                        domain="[('state', '=', 'completed')]"/>
+                <filter string="Failed" name="failed"
+                        domain="[('state', '=', 'failed')]"/>
+                <filter string="Timed Out" name="timeout"
+                        domain="[('state', '=', 'timeout')]"/>
+                <filter string="Group by Box" name="group_box"
+                        context="{'group_by': 'iot_box_id'}"/>
+                <filter string="Group by State" name="group_state"
+                        context="{'group_by': 'state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_iot_command_queue" model="ir.actions.act_window">
+        <field name="name">Commands</field>
+        <field name="res_model">iot.command.queue</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_iot_command_queue_search"/>
+        <field name="context">{'search_default_inflight': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No commands sent yet
+            </p>
+            <p>
+                Click <b>Test</b> on any device to dispatch a round-trip command.
+            </p>
+        </field>
+    </record>
+
+</odoo>

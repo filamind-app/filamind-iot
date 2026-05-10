@@ -97,7 +97,7 @@ jobs:
           echo "Rename complete."
 
   routes-aliases:
-    name: All controllers register both /filamind_iot/* and /iot/box/* paths
+    name: Each controller route exposes a /filamind_iot/* path and an /iot/* alias
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -105,14 +105,14 @@ jobs:
           python <<'PY'
           import pathlib, re, sys
           src = pathlib.Path('filamind_iot/controllers/iot_controller.py').read_text()
-          # find every @http.route([...]) declaration
           decls = re.findall(r'@http\.route\(\s*\[([^\]]+)\]', src)
           fail = False
           for d in decls:
-              has_filamind = 'filamind_iot/' in d
-              has_alias    = '/iot/box/'    in d
+              has_filamind = '/filamind_iot/' in d
+              # Either an /iot/box/<action> alias OR an /iot/setup alias
+              has_alias = ('/iot/box/' in d) or ('/iot/setup' in d)
               if not (has_filamind and has_alias):
-                  print(f"::error::route is missing one of the two paths: {d.strip()}")
+                  print(f"::error::route lacks a paired filamind/iot alias: {d.strip()}")
                   fail = True
           sys.exit(1 if fail else 0)
           PY

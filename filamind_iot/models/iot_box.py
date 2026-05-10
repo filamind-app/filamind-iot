@@ -1,3 +1,4 @@
+import json
 import uuid
 from datetime import timedelta
 from odoo import api, fields, models, _
@@ -48,6 +49,11 @@ class IotBox(models.Model):
         default=lambda self: uuid.uuid4().hex,
         help='Secret token used by the IoT Box to authenticate API calls.',
     )
+    ws_channel = fields.Char(
+        string='WebSocket Channel', copy=False, readonly=True, index=True,
+        help='bus.bus channel this box subscribes to. Filled in at first '
+             '/iot/setup call. Server-side commands target this channel.',
+    )
 
     state = fields.Selection([
         ('new', 'Not Paired'),
@@ -88,6 +94,8 @@ class IotBox(models.Model):
         string='Devices', compute='_compute_counts')
     log_count = fields.Integer(
         string='Log Entries', compute='_compute_counts')
+    command_count = fields.Integer(
+        string='Commands', compute='_compute_counts')
 
     notes = fields.Html(string='Internal Notes')
     color = fields.Integer(string='Color Index', default=0)
@@ -116,9 +124,12 @@ class IotBox(models.Model):
 
     @api.depends('device_ids', 'connection_log_ids')
     def _compute_counts(self):
+        Cmd = self.env['iot.command.queue']
         for box in self:
             box.device_count = len(box.device_ids)
             box.log_count = len(box.connection_log_ids)
+            box.command_count = Cmd.search_count(
+                [('iot_box_id', '=', box.id)])
 
     # ── ORM ──────────────────────────────────────────────────────────────
     @api.model_create_multi
@@ -210,6 +221,95 @@ class IotBox(models.Model):
             'view_mode': 'list,form',
             'domain': [('iot_box_id', '=', self.id)],
             'context': {'default_iot_box_id': self.id},
+        }
+
+    def action_view_commands(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Commands'),
+            'res_model': 'iot.command.queue',
+            'view_mode': 'list,form',
+            'domain': [('iot_box_id', '=', self.id)],
+            'context': {'default_iot_box_id': self.id},
+        }
+
+    # ── WebSocket / Bus ──────────────────────────────────────────────────
+    def _ensure_ws_channel(self):
+        """Allocate a WebSocket channel name on first /iot/setup call."""
+        self.ensure_one()
+        if not self.ws_channel:
+            # Token-derived channel: unguessable, ties subscriptions to the box.
+            self.sudo().ws_channel = 'iot_%s' % self.sudo().token
+        return self.ws_channel
+
+    def send_bus_message(self, method='iot_action', payload=None,
+                         device=None, timeout=15):
+        """Push a command to this box via bus.bus and create a queue entry.
+
+        :param method: The 'type' field in the bus envelope. Mapped to
+                       message_type by the box's communication.handle_message.
+                       Use 'iot_action' for device commands.
+        :param payload: Extra dict merged into the message payload.
+        :param device: Optional iot.device for tracking on the queue.
+        :param timeout: Seconds before the cron marks this command as
+                        timed out.
+        :return: The created iot.command.queue record.
+        """
+        self.ensure_one()
+        channel = self.ws_channel
+        if not channel:
+            raise UserError(_(
+                "This box hasn't subscribed to a WebSocket channel yet — "
+                "wait for it to call /iot/setup or restart the box's Odoo "
+                "service."))
+        if self.state != 'connected':
+            raise UserError(_(
+                "Box %s is not connected (state=%s).") % (self.name, self.state))
+
+        Queue = self.env['iot.command.queue'].sudo()
+        session_id = Queue._new_session_id()
+
+        message = {
+            'iot_identifier': self.identifier,
+            'session_id': session_id,
+            **(payload or {}),
+        }
+        if device:
+            message['device_identifier'] = device.identifier
+
+        queue = Queue.create({
+            'name': session_id,
+            'iot_box_id': self.id,
+            'device_id': device.id if device else False,
+            'method': method,
+            'request_payload': json.dumps(message, default=str)[:32000],
+            'timeout_seconds': timeout,
+            'state': 'sent',
+            'sent_at': fields.Datetime.now(),
+        })
+
+        # bus.bus dispatch happens after the current transaction commits;
+        # the queue row will be visible to /iot/box/send_websocket by then.
+        self.env['bus.bus']._sendone(channel, method, message)
+        return queue
+
+    def action_test_connection(self):
+        """Round-trip a 'test_connection' message via the bus."""
+        self.ensure_one()
+        queue = self.send_bus_message(method='test_connection', timeout=10)
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Test sent'),
+                'message': _(
+                    'Test message dispatched to %(box)s. Watch the queue '
+                    'entry %(qid)s for the result.') % {
+                        'box': self.name, 'qid': queue.name[:12] + '…'},
+                'type': 'info',
+                'sticky': False,
+            },
         }
 
     def action_open_homepage(self):

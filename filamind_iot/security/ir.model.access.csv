@@ -8,3 +8,5 @@ access_iot_device_admin,iot.device admin,model_iot_device,base.group_system,1,1,
 access_iot_connection_log_user,iot.connection.log user,model_iot_connection_log,base.group_user,1,0,0,0
 access_iot_connection_log_admin,iot.connection.log admin,model_iot_connection_log,base.group_system,1,1,1,1
 access_iot_pairing_wizard_user,iot.pairing.wizard user,model_iot_pairing_wizard,base.group_user,1,1,1,1
+access_iot_command_queue_user,iot.command.queue user,model_iot_command_queue,base.group_user,1,0,0,0
+access_iot_command_queue_admin,iot.command.queue admin,model_iot_command_queue,base.group_system,1,1,1,1

@@ -14,11 +14,41 @@ Raspberry Pi image. An independent alternative to Odoo Enterprise's stock
 
 | Component | Purpose |
 |---|---|
-| `iot.box` | The gateway record (pairing code, token, heartbeat, state) |
+| `iot.box` | The gateway record (pairing code, token, heartbeat, state, **WS channel**) |
 | `iot.device` | A peripheral attached to a box (printer, scale, scanner, …) |
 | `iot.device.type` | Catalog of device categories (12 preloaded) |
 | `iot.connection.log` | Audit trail of pairing, heartbeats, device events |
+| `iot.command.queue` | **Outgoing commands** sent via bus, plus round-trip results |
 | `iot.pairing.wizard` | Dual-mode pairing wizard |
+
+### Bidirectional command flow
+
+```
+  Server (Odoo)                            Box (filamind-iotbox)
+  ─────────────                            ─────────────────────
+  /iot/setup       ◄── POST {iot_box, devices} ── _send_all_devices()
+  ws_channel  ── return string ──────────────────►  stores ws_channel
+                                                       │
+                                                       ▼
+                                                 opens wss://<host>/websocket
+                                                 subscribes to ws_channel
+                                                       │
+  iot.box.send_bus_message()                           ▼
+       │                                         on_message →
+       ▼                                           communication.handle_message
+  bus.bus._sendone(channel, type, payload) ─►      dispatches to driver
+                                                       │
+                                                       ▼ (action result)
+  /iot/box/send_websocket ◄── POST {result} ── send_to_controller()
+       │
+       ▼
+  iot.command.queue.record_response()
+  state: sent → completed / failed
+```
+
+The public API is `iot.box.send_bus_message(method, payload, device, timeout)`.
+The **Test Connection** button (on the box form) and **Test Print** button
+(on printer-type device forms) are reference implementations.
 
 ### HTTP endpoints
 

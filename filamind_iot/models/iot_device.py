@@ -1,4 +1,5 @@
 from odoo import api, fields, models, _
+from odoo.exceptions import UserError
 
 
 class IotDevice(models.Model):
@@ -106,24 +107,81 @@ class IotDevice(models.Model):
             dev.message_post(body=_('Device disabled.'))
 
     def action_test(self):
-        """Create a log entry simulating a test ping. A real box would POST
-        back its response via the HTTP controller."""
+        """Round-trip a 'test_connection' message via bus.bus to verify the
+        device's box is actually reachable end-to-end."""
         self.ensure_one()
+        if self.iot_box_id.state != 'connected':
+            raise UserError(_(
+                "The box owning this device is not connected (state=%s). "
+                "Pair or wake the box first.") % self.iot_box_id.state)
+        queue = self.iot_box_id.send_bus_message(
+            method='test_connection',
+            payload={'device_identifier': self.identifier},
+            device=self,
+            timeout=10,
+        )
         self.env['iot.connection.log'].create({
             'iot_box_id': self.iot_box_id.id,
             'device_id': self.id,
             'event': 'test',
-            'message': _('Test requested by %s') % self.env.user.name,
+            'message': _('Test command sent (session %s).') % queue.name[:12],
         })
         return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('Test queued'),
-                'message': _('A test command was queued for %s.') % self.name,
-                'type': 'success',
-                'sticky': False,
+            'type': 'ir.actions.act_window',
+            'name': _('Command'),
+            'res_model': 'iot.command.queue',
+            'res_id': queue.id,
+            'view_mode': 'form',
+            'target': 'new',
+        }
+
+    def action_test_print(self):
+        """Send a small test print job to a printer-type device.
+
+        The exact payload is what upstream Odoo's iot_drivers ESC/POS
+        printer driver consumes via its action() method. Verification with
+        a real printer is part of Phase 2 (hardware-in-the-loop tests).
+        """
+        self.ensure_one()
+        if self.type_id.code not in ('receipt_printer', 'label_printer'):
+            raise UserError(_(
+                "Test print is only available for receipt or label printers."))
+        if self.iot_box_id.state != 'connected':
+            raise UserError(_(
+                "The box owning this printer is not connected."))
+        body = (
+            "*** filamind test print ***\n"
+            "\n"
+            "Box:    %s\n"
+            "Device: %s\n"
+            "Time:   %s\n"
+            "\n"
+            "If you can read this on a paper roll, the\n"
+            "round-trip Odoo -> box -> printer works.\n"
+        ) % (self.iot_box_id.name, self.name, fields.Datetime.now())
+        queue = self.iot_box_id.send_bus_message(
+            method='iot_action',
+            payload={
+                'document': body,
+                'document_format': 'raw',
+                'print_id': fields.Datetime.now().isoformat(),
             },
+            device=self,
+            timeout=15,
+        )
+        self.env['iot.connection.log'].create({
+            'iot_box_id': self.iot_box_id.id,
+            'device_id': self.id,
+            'event': 'test',
+            'message': _('Test print sent (session %s).') % queue.name[:12],
+        })
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Print Command'),
+            'res_model': 'iot.command.queue',
+            'res_id': queue.id,
+            'view_mode': 'form',
+            'target': 'new',
         }
 
     def action_view_logs(self):

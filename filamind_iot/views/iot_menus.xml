@@ -33,6 +33,12 @@
               action="action_iot_connection_log"
               sequence="30"/>
 
+    <menuitem id="iot_menu_commands"
+              name="Commands"
+              parent="iot_menu_root"
+              action="action_iot_command_queue"
+              sequence="40"/>
+
     <!-- Configuration submenu -->
     <menuitem id="iot_menu_config"
               name="Configuration"

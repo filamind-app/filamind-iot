@@ -110,6 +110,11 @@
                             string="Open Box Homepage" class="btn-link"
                             icon="fa-external-link"
                             invisible="not ip_address"/>
+                    <button name="action_test_connection" type="object"
+                            string="Test Connection" class="btn-secondary"
+                            icon="fa-bolt"
+                            invisible="state != 'connected'"
+                            help="Round-trip a test_connection message via the bus."/>
                     <field name="state" widget="statusbar"
                            statusbar_visible="new,pairing,connected,disconnected"/>
                 </header>
@@ -124,6 +129,11 @@
                                 class="oe_stat_button" icon="fa-history">
                             <field name="log_count" widget="statinfo"
                                    string="Log Entries"/>
+                        </button>
+                        <button name="action_view_commands" type="object"
+                                class="oe_stat_button" icon="fa-bolt">
+                            <field name="command_count" widget="statinfo"
+                                   string="Commands"/>
                         </button>
                     </div>
 
@@ -164,6 +174,8 @@
                             <field name="pairing_expiry" readonly="1"/>
                             <field name="box_pairing_token"
                                    placeholder="Token shown on the box screen"/>
+                            <field name="ws_channel" readonly="1"
+                                   groups="base.group_system"/>
                         </group>
                         <group string="Ownership">
                             <field name="user_id"/>

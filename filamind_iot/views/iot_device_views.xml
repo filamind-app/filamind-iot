@@ -80,7 +80,13 @@
                 <header>
                     <button name="action_test" type="object"
                             string="Test Device" class="btn-primary"
-                            invisible="state == 'disabled'"/>
+                            invisible="state == 'disabled'"
+                            help="Round-trip a test_connection bus message and watch the result."/>
+                    <button name="action_test_print" type="object"
+                            string="Test Print" class="btn-secondary"
+                            icon="fa-print"
+                            invisible="type_code not in ('receipt_printer','label_printer') or state == 'disabled'"
+                            help="Send a small ESC/POS test page to this printer."/>
                     <button name="action_enable" type="object"
                             string="Enable" class="btn-secondary"
                             invisible="state != 'disabled'"/>

@@ -224,17 +224,12 @@ class IotController(http.Controller):
 
     # ── Device status update ─────────────────────────────────────────────
     @http.route(['/filamind_iot/device_status',
-                 '/iot/box/device_status',
-                 '/iot/box/send_websocket'],
+                 '/iot/box/device_status'],
                 type='http', auth='public', methods=['POST'], csrf=False)
     def device_status(self, **post):
         """Update a single device state.
         Payload: {'identifier':..., 'token':..., 'device': '<device_ident>',
                   'state': 'online|offline|error', 'message': '...'}
-
-        The /iot/box/send_websocket alias matches the default `method` used
-        by the upstream Odoo IoT Box's send_to_controller helper, allowing
-        the box to push device-state updates without code changes.
         """
         try:
             payload = request.httprequest.get_json(silent=True) or post
@@ -259,3 +254,166 @@ class IotController(http.Controller):
 
         except Exception:
             return _internal_error('IoT device status failed')
+
+    # ── Setup (called once at box startup) ───────────────────────────────
+    @http.route(['/filamind_iot/setup', '/iot/setup'],
+                type='http', auth='public', methods=['POST'], csrf=False)
+    def setup(self, **post):
+        """The box calls this on first boot after a server URL is set.
+
+        Body (Odoo JSON-RPC envelope):
+          {"params": {"iot_box": {...meta...}, "devices": {ident: {...}}}}
+
+        Authentication is by token via box.identifier match on the iot_box
+        meta block, OR (legacy fallback) by mac_address. The endpoint:
+          1. Resolves the iot.box record (creating one in 'pairing' state if
+             we don't recognise the identifier — the admin can claim it via
+             the wizard's box-token mode).
+          2. Allocates a WebSocket channel name (`iot_<token>`) and returns
+             it as the JSON-RPC `result` so the box's WebsocketClient
+             subscribes to it.
+          3. Auto-discovers any reported devices (gated by
+             filamind_iot.auto_discover).
+        """
+        try:
+            payload = request.httprequest.get_json(silent=True) or post
+            params = payload.get('params') or payload  # tolerate bare body
+            iot_box_meta = params.get('iot_box') or {}
+            devices_meta = params.get('devices') or {}
+
+            identifier = (iot_box_meta.get('identifier')
+                          or iot_box_meta.get('mac')
+                          or iot_box_meta.get('mac_address')
+                          or '').strip()
+            if not identifier:
+                return _json_response(
+                    {'error': 'Missing identifier'}, status=400)
+
+            Box = request.env['iot.box'].sudo()
+            box = Box.search([('identifier', '=', identifier)], limit=1)
+
+            if not box:
+                # Auto-create in 'pairing' state — admin can later claim
+                # via the wizard's box-token mode.
+                box = Box.create({
+                    'name': iot_box_meta.get('name') or _box_default_name(identifier),
+                    'identifier': identifier,
+                    'ip_address': iot_box_meta.get('ip_url')
+                                   or iot_box_meta.get('ip')
+                                   or _client_ip(),
+                    'mac_address': iot_box_meta.get('mac_address') or identifier,
+                    'hostname': iot_box_meta.get('hostname'),
+                    'version': iot_box_meta.get('version'),
+                    'state': 'pairing',
+                })
+
+            # Allocate / refresh the WebSocket channel for this box.
+            channel = box._ensure_ws_channel()
+
+            # Touch heartbeat so the box appears online immediately.
+            box.sudo().write({
+                'last_heartbeat': fields.Datetime.now(),
+                'ip_address': iot_box_meta.get('ip_url')
+                               or iot_box_meta.get('ip')
+                               or box.ip_address
+                               or _client_ip(),
+                'version': iot_box_meta.get('version') or box.version,
+                'hostname': iot_box_meta.get('hostname') or box.hostname,
+                'state': 'connected' if box.state != 'blocked' else 'blocked',
+            })
+            request.env['iot.connection.log'].sudo().create({
+                'iot_box_id': box.id,
+                'event': 'connected',
+                'ip_address': _client_ip(),
+                'message': 'Setup call: ws_channel=%s' % channel,
+                'payload': json.dumps(params, default=str)[:2000],
+            })
+
+            # Discover devices (best-effort — same logic as report_devices
+            # but tolerant of the {"id": {...}} dict shape Odoo upstream uses).
+            self._auto_discover_devices(box, devices_meta)
+
+            # The box reads `data.get('result', '')` — string return form.
+            return _json_response({'jsonrpc': '2.0', 'result': channel})
+
+        except Exception:
+            return _internal_error('IoT setup failed')
+
+    def _auto_discover_devices(self, box, devices_dict):
+        if not devices_dict:
+            return
+        auto = request.env['ir.config_parameter'].sudo().get_param(
+            'filamind_iot.auto_discover', 'True').lower() not in ('false', '0')
+        if not auto:
+            return
+        Device = request.env['iot.device'].sudo()
+        Type = request.env['iot.device.type'].sudo()
+        generic = Type.search([('code', '=', 'generic')], limit=1)
+        for ident, meta in (devices_dict or {}).items():
+            if not ident:
+                continue
+            existing = Device.search([
+                ('iot_box_id', '=', box.id),
+                ('identifier', '=', ident),
+            ], limit=1)
+            type_code = (meta.get('type') if isinstance(meta, dict) else None) or 'generic'
+            dtype = Type.search([('code', '=', type_code)], limit=1) or generic
+            vals = {
+                'name': (meta or {}).get('name') or ident,
+                'iot_box_id': box.id,
+                'identifier': ident,
+                'type_id': dtype.id if dtype else False,
+                'connection': (meta or {}).get('connection') or 'usb',
+                'manufacturer': (meta or {}).get('manufacturer'),
+                'model_name': (meta or {}).get('model'),
+                'subtype': (meta or {}).get('subtype'),
+                'state': 'online',
+                'last_seen': fields.Datetime.now(),
+            }
+            if existing:
+                existing.write(vals)
+            else:
+                Device.create(vals)
+
+    # ── Command result collector (box → server, after acting) ────────────
+    @http.route(['/filamind_iot/command_result', '/iot/box/send_websocket'],
+                type='http', auth='public', methods=['POST'], csrf=False)
+    def command_result(self, **post):
+        """The box POSTs here after handling a bus message. We correlate
+        with the originating iot.command.queue entry by session_id and
+        record the result.
+
+        Body shape: {"params": {<communication.handle_message return>}}
+        where the inner dict has 'session_id' (correlation), 'status',
+        'iot_box_identifier', 'device_identifier', and result-specific
+        fields.
+        """
+        try:
+            payload = request.httprequest.get_json(silent=True) or post
+            params = payload.get('params') or payload
+            session_id = (params.get('session_id') or params.get('owner') or '').strip()
+            if not session_id:
+                return _json_response(
+                    {'error': 'Missing session_id'}, status=400)
+
+            queue = request.env['iot.command.queue'].sudo().search(
+                [('name', '=', session_id)], limit=1)
+            if not queue:
+                # Not necessarily an error — could be a stale message after
+                # a server restart. Log and accept.
+                _logger.info(
+                    "command_result: no queue entry for session_id %s",
+                    session_id)
+                return _json_response({'status': 'ok', 'matched': False})
+
+            queue.record_response(params)
+            return _json_response({'status': 'ok', 'matched': True,
+                                   'queue_id': queue.id})
+
+        except Exception:
+            return _internal_error('IoT command_result failed')
+
+
+def _box_default_name(identifier):
+    short = identifier[:8] if identifier else 'unknown'
+    return 'IoT Box %s' % short
