@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_picking_form_iot" model="ir.ui.view">
+        <field name="name">stock.picking.form.iot</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_print_iot_label"
+                        type="object"
+                        string="Print IoT Label"
+                        class="btn-secondary"
+                        icon="fa-tags"
+                        invisible="not iot_label_printer_id or state == 'cancel'"/>
+                <button name="action_iot_weigh"
+                        type="object"
+                        string="Read Scale"
+                        class="btn-secondary"
+                        icon="fa-balance-scale"
+                        invisible="not iot_scale_id or state == 'cancel'"/>
+            </xpath>
+            <xpath expr="//sheet" position="inside">
+                <field name="iot_box_id" invisible="1"/>
+                <field name="iot_label_printer_id" invisible="1"/>
+                <field name="iot_scale_id" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

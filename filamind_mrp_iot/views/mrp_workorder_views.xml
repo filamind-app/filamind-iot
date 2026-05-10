@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_workorder_form_iot" model="ir.ui.view">
+        <field name="name">mrp.workorder.form.iot</field>
+        <field name="model">mrp.workorder</field>
+        <field name="inherit_id" ref="mrp.mrp_production_workorder_form_view_inherit"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_iot_capture_measurement"
+                        type="object"
+                        string="Read Caliper"
+                        class="btn-secondary"
+                        icon="fa-tachometer"
+                        invisible="not iot_caliper_id or state in ('done','cancel')"/>
+                <button name="action_print_iot_label"
+                        type="object"
+                        string="Print Label"
+                        class="btn-secondary"
+                        icon="fa-tags"
+                        invisible="not iot_label_printer_id or state == 'cancel'"/>
+            </xpath>
+            <xpath expr="//sheet" position="inside">
+                <field name="iot_box_id" invisible="1"/>
+                <field name="iot_label_printer_id" invisible="1"/>
+                <field name="iot_caliper_id" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

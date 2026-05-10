@@ -7,6 +7,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+env:
+  ADDONS: filamind_iot filamind_pos_iot filamind_stock_iot filamind_mrp_iot
+
 jobs:
   lint-python:
     name: Lint Python (ruff + py_compile)
@@ -20,15 +23,22 @@ jobs:
 
       - run: pip install ruff
 
-      - name: ruff check
-        run: ruff check filamind_iot/
+      - name: ruff check (every addon)
+        run: |
+          for a in $ADDONS; do
+              echo "::group::ruff $a"
+              ruff check "$a"
+              echo "::endgroup::"
+          done
 
-      - name: py_compile every Python file
+      - name: py_compile every Python file across all addons
         run: |
           fail=0
-          while IFS= read -r f; do
-              python -m py_compile "$f" || { echo "::error file=$f::syntax error"; fail=1; }
-          done < <(find filamind_iot -name '*.py')
+          for a in $ADDONS; do
+              while IFS= read -r f; do
+                  python -m py_compile "$f" || { echo "::error file=$f::syntax error"; fail=1; }
+              done < <(find "$a" -name '*.py')
+          done
           exit $fail
 
   validate-xml:
@@ -39,17 +49,19 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Parse every XML file
+      - name: Parse every XML file across all addons
         run: |
           fail=0
-          while IFS= read -r f; do
-              python -c "import xml.etree.ElementTree as ET; ET.parse('$f')" \
-                  || { echo "::error file=$f::malformed XML"; fail=1; }
-          done < <(find filamind_iot -name '*.xml')
+          for a in $ADDONS; do
+              while IFS= read -r f; do
+                  python -c "import xml.etree.ElementTree as ET; ET.parse('$f')" \
+                      || { echo "::error file=$f::malformed XML"; fail=1; }
+              done < <(find "$a" -name '*.xml')
+          done
           exit $fail
 
   manifest-sanity:
-    name: Manifest references must exist on disk
+    name: Manifest references must exist on disk (every addon)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -59,45 +71,51 @@ jobs:
       - name: Verify every 'data' file in __manifest__.py is present
         run: |
           python <<'PY'
-          import ast, sys, pathlib
-
-          manifest_path = pathlib.Path('filamind_iot/__manifest__.py')
-          manifest = ast.literal_eval(manifest_path.read_text())
+          import ast, os, pathlib, sys
 
           fail = False
-          for rel in manifest.get('data', []):
-              p = pathlib.Path('filamind_iot') / rel
-              if not p.is_file():
-                  print(f"::error file={manifest_path}::missing referenced file: {rel}")
+          for a in os.environ['ADDONS'].split():
+              manifest_path = pathlib.Path(a) / '__manifest__.py'
+              if not manifest_path.is_file():
+                  print(f"::error::missing {manifest_path}")
                   fail = True
+                  continue
+              manifest = ast.literal_eval(manifest_path.read_text())
 
-          for rel in manifest.get('assets', {}).get('web.assets_backend', []):
-              # asset paths start with the addon technical name
-              parts = rel.split('/', 1)
-              if len(parts) == 2:
-                  p = pathlib.Path(parts[0]) / parts[1]
+              for rel in manifest.get('data', []):
+                  p = pathlib.Path(a) / rel
                   if not p.is_file():
-                      print(f"::error file={manifest_path}::missing asset: {rel}")
+                      print(f"::error file={manifest_path}::missing referenced file: {rel}")
                       fail = True
+
+              for rel in manifest.get('assets', {}).get('web.assets_backend', []):
+                  parts = rel.split('/', 1)
+                  if len(parts) == 2:
+                      p = pathlib.Path(parts[0]) / parts[1]
+                      if not p.is_file():
+                          print(f"::error file={manifest_path}::missing asset: {rel}")
+                          fail = True
 
           sys.exit(1 if fail else 0)
           PY
 
   no-leftover-rename:
-    name: No 'iot_custom' references survived the rename
+    name: No 'iot_custom' references survived
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Search for stragglers
-        run: |
-          if grep -RIn 'iot_custom' filamind_iot/ 2>&1; then
-              echo "::error::'iot_custom' string found in filamind_iot/ — rename incomplete"
-              exit 1
-          fi
-          echo "Rename complete."
+      - run: |
+          fail=0
+          for a in $ADDONS; do
+              if grep -RIn 'iot_custom' "$a" 2>&1; then
+                  echo "::error::'iot_custom' string found in $a/"
+                  fail=1
+              fi
+          done
+          exit $fail
 
   routes-aliases:
-    name: Each controller route exposes a /filamind_iot/* path and an /iot/* alias
+    name: Each filamind_iot route exposes /filamind_iot/* + /iot/* alias
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -109,10 +127,32 @@ jobs:
           fail = False
           for d in decls:
               has_filamind = '/filamind_iot/' in d
-              # Either an /iot/box/<action> alias OR an /iot/setup alias
               has_alias = ('/iot/box/' in d) or ('/iot/setup' in d)
               if not (has_filamind and has_alias):
                   print(f"::error::route lacks a paired filamind/iot alias: {d.strip()}")
+                  fail = True
+          sys.exit(1 if fail else 0)
+          PY
+
+  addon-installable:
+    name: All four __manifest__.py files declare installable=True
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          python <<'PY'
+          import ast, os, pathlib, sys
+          fail = False
+          for a in os.environ['ADDONS'].split():
+              m = ast.literal_eval(pathlib.Path(a, '__manifest__.py').read_text())
+              if not m.get('installable', True):
+                  print(f"::error::{a} is not installable")
+                  fail = True
+              if not m.get('depends'):
+                  print(f"::error::{a} has empty depends")
                   fail = True
           sys.exit(1 if fail else 0)
           PY

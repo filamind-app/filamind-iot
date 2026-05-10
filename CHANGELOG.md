@@ -6,6 +6,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added — business-domain addons (v0.3.0)
+- **`filamind_pos_iot`** — extends `pos.config` with M2O fields for printer,
+  scale, scanner, customer display, and cash drawer. Adds test buttons in
+  the POS configuration form. Adds `pos.session.action_print_iot_receipt`
+  and `pos.session.update_iot_customer_display` server methods. Binds
+  `pos.payment.method` to a specific IoT terminal via `iot_terminal_id`.
+- **`filamind_stock_iot`** — extends `stock.warehouse` with label-printer,
+  receipt-printer, scale, and scanner defaults. Adds `Print IoT Label` +
+  `Read Scale` buttons on `stock.picking`. Picking inherits the
+  warehouse's IoT defaults via `related` fields.
+- **`filamind_mrp_iot`** — extends `mrp.workcenter` with label-printer,
+  caliper, scanner defaults. Adds `Read Caliper` + `Print Label` buttons
+  on `mrp.workorder`. Default work-order label template included; override
+  for custom ZPL/EPL.
+- **CI updated** to scan all four addons (ruff, py_compile, XML
+  well-formedness, manifest references, no-iot_custom-leftover, route
+  aliases, installable check).
+
 ### Added — WebSocket bidirectional command flow (v0.2.0)
 - **`bus.bus` integration**: each box gets a private channel `iot_<token>`,
   allocated on first `/iot/setup` call. The box's `WebsocketClient`

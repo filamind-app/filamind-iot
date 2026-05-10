@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_pos_payment_method_form_iot" model="ir.ui.view">
+        <field name="name">pos.payment.method.form.iot</field>
+        <field name="model">pos.payment.method</field>
+        <field name="inherit_id" ref="point_of_sale.pos_payment_method_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="IoT Terminal (filamind)" name="filamind_iot_terminal">
+                    <field name="iot_terminal_id"
+                           options="{'no_create': True}"/>
+                    <button name="action_iot_terminal_test"
+                            type="object"
+                            string="Test Terminal"
+                            class="btn btn-secondary"
+                            icon="fa-bolt"
+                            invisible="not iot_terminal_id"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

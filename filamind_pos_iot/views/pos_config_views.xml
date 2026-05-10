@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_pos_config_form_iot" model="ir.ui.view">
+        <field name="name">pos.config.form.iot</field>
+        <field name="model">pos.config</field>
+        <field name="inherit_id" ref="point_of_sale.pos_config_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="IoT Devices (filamind)" name="filamind_iot_group">
+                    <group>
+                        <field name="iot_box_id"
+                               options="{'no_create': True, 'no_quick_create': True}"/>
+                        <field name="iot_printer_id"
+                               readonly="not iot_box_id"
+                               options="{'no_create': True}"/>
+                        <field name="iot_scale_id"
+                               readonly="not iot_box_id"
+                               options="{'no_create': True}"/>
+                        <field name="iot_scanner_id"
+                               readonly="not iot_box_id"
+                               options="{'no_create': True}"/>
+                    </group>
+                    <group>
+                        <field name="iot_customer_display_id"
+                               readonly="not iot_box_id"
+                               options="{'no_create': True}"/>
+                        <field name="iot_cash_drawer_id"
+                               readonly="not iot_box_id"
+                               options="{'no_create': True}"/>
+                    </group>
+                </group>
+
+                <group string="IoT Quick Tests" name="filamind_iot_tests"
+                       invisible="not iot_box_id">
+                    <div colspan="2" class="d-flex flex-wrap gap-2">
+                        <button name="action_iot_test_connection"
+                                type="object"
+                                string="Test Connection"
+                                class="btn btn-secondary"
+                                icon="fa-bolt"/>
+                        <button name="action_iot_test_print"
+                                type="object"
+                                string="Test Print"
+                                class="btn btn-secondary"
+                                icon="fa-print"
+                                invisible="not iot_printer_id"/>
+                        <button name="action_iot_test_weigh"
+                                type="object"
+                                string="Read Scale"
+                                class="btn btn-secondary"
+                                icon="fa-balance-scale"
+                                invisible="not iot_scale_id"/>
+                        <button name="action_iot_open_drawer"
+                                type="object"
+                                string="Open Drawer"
+                                class="btn btn-secondary"
+                                icon="fa-archive"
+                                invisible="not iot_printer_id and not iot_cash_drawer_id"/>
+                        <button name="action_iot_open_devices"
+                                type="object"
+                                string="View Devices"
+                                class="btn btn-link"
+                                icon="fa-microchip"/>
+                    </div>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

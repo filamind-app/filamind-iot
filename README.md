@@ -1,16 +1,45 @@
 # filamind-iot
 
-Self-hosted **IoT gateway addon for Odoo 19**, designed to pair with the
+Self-hosted **IoT gateway suite for Odoo 19**, designed to pair with the
 [**filamind-iotbox**](https://github.com/filamind-app/filamind-iotbox)
 Raspberry Pi image. An independent alternative to Odoo Enterprise's stock
-`iot` module — no `iot-proxy.odoo.com` involved.
+`iot`, `pos_iot`, etc. — no `iot-proxy.odoo.com` involved.
 
 > Built on top of, but independent of, Odoo. Released under LGPL-3 to match
 > upstream Odoo's license.
 
 ---
 
-## What's inside
+## The four addons
+
+This monorepo ships four sibling Odoo addons. Install only what you need.
+
+| Addon | Depends on | Purpose |
+|---|---|---|
+| **`filamind_iot`** | base, mail, web, bus | Core: box+device+command models, `/iot/setup`, `/iot/box/*` HTTP endpoints, bus-based bidirectional flow, pairing wizard |
+| **`filamind_pos_iot`** | filamind_iot, point_of_sale | Per-pos.config IoT device fields (printer, scale, scanner, customer display, cash drawer), payment-terminal binding, server-side receipt printing |
+| **`filamind_stock_iot`** | filamind_iot, stock | Per-warehouse defaults (label printer, scale, scanner), `print_iot_label` and `iot_weigh` actions on stock.picking |
+| **`filamind_mrp_iot`** | filamind_iot, mrp | Per-workcenter defaults (label printer, caliper, scanner), capture measurement + print label actions on mrp.workorder |
+
+```
+            ┌─────────────────────────┐
+            │     filamind_iot        │  ← core (box, device, bus, queue)
+            └────────────┬────────────┘
+                         │ extended by
+            ┌────────────┼────────────┐
+            ▼            ▼            ▼
+   filamind_pos_iot  filamind_stock_iot  filamind_mrp_iot
+        (POS)          (Inventory)       (Manufacturing)
+```
+
+Every business addon adds Many2one fields to its core record (`pos.config`,
+`stock.warehouse`, `mrp.workcenter`) and exposes test buttons that call into
+`iot.box.send_bus_message(method, payload, device, timeout)` from the
+`filamind_iot` core.
+
+---
+
+## What's inside `filamind_iot`
 
 | Component | Purpose |
 |---|---|
@@ -145,16 +174,24 @@ Odoo *to* the box) is on the roadmap.
 
 ```
 filamind-iot/
-├── filamind_iot/                  # the actual Odoo addon
-│   ├── __manifest__.py
+├── filamind_iot/                  # core addon
 │   ├── controllers/iot_controller.py
 │   ├── data/                      # cron + sequences + 12 device types
-│   ├── models/                    # iot_box, device, type, log, settings
-│   ├── security/                  # ir.model.access + multi-company rules
+│   ├── models/                    # box, device, type, log, queue, settings
+│   ├── security/                  # ACLs + multi-company rules
 │   ├── static/                    # banner, icon, CSS
 │   ├── views/                     # kanban+list+form+search+menus
 │   └── wizard/                    # iot.pairing.wizard (dual-mode)
-├── .github/workflows/ci.yml       # ruff + pyflakes + manifest sanity
+├── filamind_pos_iot/              # POS integration
+│   ├── models/                    # pos.config, pos.session, pos.payment.method
+│   └── views/
+├── filamind_stock_iot/            # Inventory integration
+│   ├── models/                    # stock.warehouse, stock.picking
+│   └── views/
+├── filamind_mrp_iot/              # Manufacturing integration
+│   ├── models/                    # mrp.workcenter, mrp.workorder
+│   └── views/
+├── .github/workflows/ci.yml       # ruff + py_compile + XML + manifest
 ├── CHANGELOG.md
 ├── LICENSE                        # LGPL-3.0
 └── README.md

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_warehouse_form_iot" model="ir.ui.view">
+        <field name="name">stock.warehouse.form.iot</field>
+        <field name="model">stock.warehouse</field>
+        <field name="inherit_id" ref="stock.view_warehouse"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="IoT Devices (filamind)" name="filamind_iot_group">
+                    <group>
+                        <field name="iot_box_id"
+                               options="{'no_create': True, 'no_quick_create': True}"/>
+                        <field name="iot_label_printer_id"
+                               readonly="not iot_box_id"
+                               options="{'no_create': True}"/>
+                        <field name="iot_receipt_printer_id"
+                               readonly="not iot_box_id"
+                               options="{'no_create': True}"/>
+                    </group>
+                    <group>
+                        <field name="iot_scale_id"
+                               readonly="not iot_box_id"
+                               options="{'no_create': True}"/>
+                        <field name="iot_barcode_scanner_id"
+                               readonly="not iot_box_id"
+                               options="{'no_create': True}"/>
+                    </group>
+                </group>
+                <group string="IoT Quick Tests" invisible="not iot_box_id">
+                    <div colspan="2" class="d-flex flex-wrap gap-2">
+                        <button name="action_iot_test_label"
+                                type="object"
+                                string="Test Label Print"
+                                class="btn btn-secondary"
+                                icon="fa-tags"
+                                invisible="not iot_label_printer_id"/>
+                        <button name="action_iot_test_scale"
+                                type="object"
+                                string="Read Scale"
+                                class="btn btn-secondary"
+                                icon="fa-balance-scale"
+                                invisible="not iot_scale_id"/>
+                    </div>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
