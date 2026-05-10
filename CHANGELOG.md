@@ -6,6 +6,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Changed — repo layout (v0.3.1)
+- All four addons now live under a top-level `addons/` directory
+  (matches Odoo core's bundled-addons convention).
+  **Migration:** in your `odoo.conf`, point `addons_path` at
+  `/path/to/filamind-iot/addons` instead of `/path/to/filamind-iot`.
+- CI workflow paths updated; `pyproject.toml` is unchanged because
+  ruff's `per-file-ignores` are matched by filename, not path.
+- Module names, Python imports, model names, and HTTP routes are all
+  unchanged — this is a pure folder-level reorganisation.
+
 ### Added — business-domain addons (v0.3.0)
 - **`filamind_pos_iot`** — extends `pos.config` with M2O fields for printer,
   scale, scanner, customer display, and cash drawer. Adds test buttons in

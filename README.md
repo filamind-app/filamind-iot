@@ -131,10 +131,10 @@ git clone https://github.com/filamind-app/filamind-iot \
     /opt/odoo/custom-addons/filamind-iot
 ```
 
-Then in `odoo.conf`:
+Then in `odoo.conf` — point at the repo's `addons/` subdirectory:
 
 ```ini
-addons_path = /opt/odoo/addons,/opt/odoo/custom-addons/filamind-iot
+addons_path = /opt/odoo/addons,/opt/odoo/custom-addons/filamind-iot/addons
 ```
 
 Restart Odoo, install the **Filamind IoT** app from the apps screen.
@@ -174,28 +174,34 @@ Odoo *to* the box) is on the roadmap.
 
 ```
 filamind-iot/
-├── filamind_iot/                  # core addon
-│   ├── controllers/iot_controller.py
-│   ├── data/                      # cron + sequences + 12 device types
-│   ├── models/                    # box, device, type, log, queue, settings
-│   ├── security/                  # ACLs + multi-company rules
-│   ├── static/                    # banner, icon, CSS
-│   ├── views/                     # kanban+list+form+search+menus
-│   └── wizard/                    # iot.pairing.wizard (dual-mode)
-├── filamind_pos_iot/              # POS integration
-│   ├── models/                    # pos.config, pos.session, pos.payment.method
-│   └── views/
-├── filamind_stock_iot/            # Inventory integration
-│   ├── models/                    # stock.warehouse, stock.picking
-│   └── views/
-├── filamind_mrp_iot/              # Manufacturing integration
-│   ├── models/                    # mrp.workcenter, mrp.workorder
-│   └── views/
-├── .github/workflows/ci.yml       # ruff + py_compile + XML + manifest
+├── addons/                                # all four Odoo addons live here
+│   ├── filamind_iot/                      # core addon
+│   │   ├── controllers/iot_controller.py
+│   │   ├── data/                          # cron + sequences + 12 device types
+│   │   ├── models/                        # box, device, type, log, queue, settings
+│   │   ├── security/                      # ACLs + multi-company rules
+│   │   ├── static/                        # banner, icon, CSS
+│   │   ├── views/                         # kanban+list+form+search+menus
+│   │   └── wizard/                        # iot.pairing.wizard (dual-mode)
+│   ├── filamind_pos_iot/                  # POS integration
+│   │   ├── models/                        # pos.config, pos.session, pos.payment.method
+│   │   └── views/
+│   ├── filamind_stock_iot/                # Inventory integration
+│   │   ├── models/                        # stock.warehouse, stock.picking
+│   │   └── views/
+│   └── filamind_mrp_iot/                  # Manufacturing integration
+│       ├── models/                        # mrp.workcenter, mrp.workorder
+│       └── views/
+├── .github/workflows/ci.yml               # ruff + py_compile + XML + manifest
 ├── CHANGELOG.md
-├── LICENSE                        # LGPL-3.0
+├── LICENSE                                # LGPL-3.0
+├── pyproject.toml                         # ruff configuration
 └── README.md
 ```
+
+Pointing Odoo at `addons/` (not at the repo root) lets it discover all four
+modules at once — the same convention upstream Odoo uses for its bundled
+addons.
 
 ---
 
@@ -205,14 +211,14 @@ filamind-iot/
 
 ```bash
 pip install ruff
-ruff check filamind_iot/
-python -m py_compile $(find filamind_iot -name '*.py')
+ruff check addons/
+python -m py_compile $(find addons -name '*.py')
 ```
 
 ### Validate XML
 
 ```bash
-for f in filamind_iot/**/*.xml; do
+find addons -name '*.xml' -print0 | while IFS= read -r -d '' f; do
     python -c "import xml.etree.ElementTree as ET; ET.parse('$f')"
 done
 ```
@@ -220,7 +226,7 @@ done
 ### Run inside a fresh Odoo
 
 ```bash
-docker run -p 8069:8069 -v $(pwd)/filamind_iot:/mnt/extra-addons/filamind_iot \
+docker run -p 8069:8069 -v $(pwd)/addons:/mnt/extra-addons \
     odoo:19 -- -d filamind_test -i filamind_iot --stop-after-init
 ```
 
