@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Standalone IoT settings form -->
+    <record id="view_iot_config_settings_form" model="ir.ui.view">
+        <field name="name">iot.config.settings.form</field>
+        <field name="model">res.config.settings</field>
+        <field name="arch" type="xml">
+            <form string="IoT Settings" class="oe_form_configuration">
+
+                <header>
+                    <button name="execute" type="object"
+                            string="Save" class="btn-primary"/>
+                    <button special="cancel" string="Discard"
+                            class="btn-secondary"/>
+                </header>
+
+                <sheet>
+
+                    <!-- ── Pairing & Connection ─────────────────────── -->
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-12">
+                            <h2>Pairing &amp; Connection</h2>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label for="iot_pairing_code_ttl"
+                                       string="Pairing Code Validity"/>
+                                <div class="text-muted">
+                                    Minutes a pairing code remains valid.
+                                </div>
+                                <div class="mt8">
+                                    <field name="iot_pairing_code_ttl"
+                                           style="width:80px; display:inline-block;"/>
+                                    <span class="ms-2 text-muted"> minutes</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label for="iot_heartbeat_interval"
+                                       string="Default Heartbeat Interval"/>
+                                <div class="text-muted">
+                                    Seconds between expected heartbeat pings
+                                    from each box.
+                                </div>
+                                <div class="mt8">
+                                    <field name="iot_heartbeat_interval"
+                                           style="width:80px; display:inline-block;"/>
+                                    <span class="ms-2 text-muted"> seconds</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="iot_require_tls"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="iot_require_tls"
+                                       string="Require HTTPS"/>
+                                <div class="text-muted">
+                                    Reject box connections not coming over
+                                    an encrypted channel.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="iot_auto_discover"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="iot_auto_discover"
+                                       string="Auto-register New Devices"/>
+                                <div class="text-muted">
+                                    When a box reports a new device, create
+                                    it automatically instead of rejecting it.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr/>
+
+                    <!-- ── Operations ─────────────────────────────── -->
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-12">
+                            <h2>Operations</h2>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="iot_allow_remote_control"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="iot_allow_remote_control"
+                                       string="Allow Remote Device Control"/>
+                                <div class="text-muted">
+                                    Let Odoo send commands (print, open drawer,
+                                    capture image) to connected devices.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="iot_notify_on_disconnect"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="iot_notify_on_disconnect"
+                                       string="Notify on Disconnect"/>
+                                <div class="text-muted">
+                                    Send a message to the box's responsible
+                                    when it goes offline.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label for="iot_log_retention_days"
+                                       string="Log Retention"/>
+                                <div class="text-muted">
+                                    Days to keep connection log entries
+                                    before the daily cron purges them.
+                                </div>
+                                <div class="mt8">
+                                    <field name="iot_log_retention_days"
+                                           style="width:80px; display:inline-block;"/>
+                                    <span class="ms-2 text-muted"> days</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_iot_config_settings" model="ir.actions.act_window">
+        <field name="name">IoT Settings</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_iot_config_settings_form"/>
+        <field name="target">current</field>
+        <field name="context">{'module': 'filamind_iot'}</field>
+    </record>
+
+</odoo>

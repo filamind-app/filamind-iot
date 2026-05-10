@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_iot_device_type_list" model="ir.ui.view">
+        <field name="name">iot.device.type.list</field>
+        <field name="model">iot.device.type</field>
+        <field name="arch" type="xml">
+            <list string="Device Types">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="icon"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_iot_device_type_form" model="ir.ui.view">
+        <field name="name">iot.device.type.form</field>
+        <field name="model">iot.device.type</field>
+        <field name="arch" type="xml">
+            <form string="Device Type">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="code"/>
+                            <field name="icon"/>
+                        </group>
+                        <group>
+                            <field name="sequence"/>
+                            <field name="color" widget="color_picker"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group string="Description">
+                        <field name="description" nolabel="1"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button string="Save" class="btn-primary" special="save"/>
+                    <button string="Discard" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_iot_device_type" model="ir.actions.act_window">
+        <field name="name">Device Types</field>
+        <field name="res_model">iot.device.type</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

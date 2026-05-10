@@ -1,0 +1,118 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  lint-python:
+    name: Lint Python (ruff + py_compile)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install ruff
+
+      - name: ruff check
+        run: ruff check filamind_iot/
+
+      - name: py_compile every Python file
+        run: |
+          fail=0
+          while IFS= read -r f; do
+              python -m py_compile "$f" || { echo "::error file=$f::syntax error"; fail=1; }
+          done < <(find filamind_iot -name '*.py')
+          exit $fail
+
+  validate-xml:
+    name: Validate XML well-formedness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Parse every XML file
+        run: |
+          fail=0
+          while IFS= read -r f; do
+              python -c "import xml.etree.ElementTree as ET; ET.parse('$f')" \
+                  || { echo "::error file=$f::malformed XML"; fail=1; }
+          done < <(find filamind_iot -name '*.xml')
+          exit $fail
+
+  manifest-sanity:
+    name: Manifest references must exist on disk
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify every 'data' file in __manifest__.py is present
+        run: |
+          python <<'PY'
+          import ast, sys, pathlib
+
+          manifest_path = pathlib.Path('filamind_iot/__manifest__.py')
+          manifest = ast.literal_eval(manifest_path.read_text())
+
+          fail = False
+          for rel in manifest.get('data', []):
+              p = pathlib.Path('filamind_iot') / rel
+              if not p.is_file():
+                  print(f"::error file={manifest_path}::missing referenced file: {rel}")
+                  fail = True
+
+          for rel in manifest.get('assets', {}).get('web.assets_backend', []):
+              # asset paths start with the addon technical name
+              parts = rel.split('/', 1)
+              if len(parts) == 2:
+                  p = pathlib.Path(parts[0]) / parts[1]
+                  if not p.is_file():
+                      print(f"::error file={manifest_path}::missing asset: {rel}")
+                      fail = True
+
+          sys.exit(1 if fail else 0)
+          PY
+
+  no-leftover-rename:
+    name: No 'iot_custom' references survived the rename
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Search for stragglers
+        run: |
+          if grep -RIn 'iot_custom' filamind_iot/ 2>&1; then
+              echo "::error::'iot_custom' string found in filamind_iot/ — rename incomplete"
+              exit 1
+          fi
+          echo "Rename complete."
+
+  routes-aliases:
+    name: All controllers register both /filamind_iot/* and /iot/box/* paths
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          python <<'PY'
+          import pathlib, re, sys
+          src = pathlib.Path('filamind_iot/controllers/iot_controller.py').read_text()
+          # find every @http.route([...]) declaration
+          decls = re.findall(r'@http\.route\(\s*\[([^\]]+)\]', src)
+          fail = False
+          for d in decls:
+              has_filamind = 'filamind_iot/' in d
+              has_alias    = '/iot/box/'    in d
+              if not (has_filamind and has_alias):
+                  print(f"::error::route is missing one of the two paths: {d.strip()}")
+                  fail = True
+          sys.exit(1 if fail else 0)
+          PY

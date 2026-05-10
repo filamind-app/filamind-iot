@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="type_receipt_printer" model="iot.device.type">
+        <field name="name">Receipt Printer</field>
+        <field name="code">receipt_printer</field>
+        <field name="icon">fa-print</field>
+        <field name="sequence">10</field>
+        <field name="description">Thermal receipt printers (Epson TM, Star TSP, etc.)</field>
+    </record>
+
+    <record id="type_label_printer" model="iot.device.type">
+        <field name="name">Label Printer</field>
+        <field name="code">label_printer</field>
+        <field name="icon">fa-tags</field>
+        <field name="sequence">20</field>
+        <field name="description">Zebra / Dymo / Brother label printers for shipping and product labels.</field>
+    </record>
+
+    <record id="type_barcode_scanner" model="iot.device.type">
+        <field name="name">Barcode Scanner</field>
+        <field name="code">barcode_scanner</field>
+        <field name="icon">fa-barcode</field>
+        <field name="sequence">30</field>
+        <field name="description">Handheld or fixed barcode/QR scanners (USB-HID or serial).</field>
+    </record>
+
+    <record id="type_scale" model="iot.device.type">
+        <field name="name">Electronic Scale</field>
+        <field name="code">scale</field>
+        <field name="icon">fa-balance-scale</field>
+        <field name="sequence">40</field>
+        <field name="description">Weighing scales used in POS and warehouse.</field>
+    </record>
+
+    <record id="type_camera" model="iot.device.type">
+        <field name="name">Camera</field>
+        <field name="code">camera</field>
+        <field name="icon">fa-camera</field>
+        <field name="sequence">50</field>
+        <field name="description">USB/IP camera for quality control or proof-of-delivery snapshots.</field>
+    </record>
+
+    <record id="type_payment_terminal" model="iot.device.type">
+        <field name="name">Payment Terminal</field>
+        <field name="code">payment_terminal</field>
+        <field name="icon">fa-credit-card</field>
+        <field name="sequence">60</field>
+        <field name="description">EFT / chip-and-PIN payment terminals integrated with POS.</field>
+    </record>
+
+    <record id="type_cash_drawer" model="iot.device.type">
+        <field name="name">Cash Drawer</field>
+        <field name="code">cash_drawer</field>
+        <field name="icon">fa-archive</field>
+        <field name="sequence">70</field>
+        <field name="description">Cash drawer opened via receipt printer or dedicated port.</field>
+    </record>
+
+    <record id="type_customer_display" model="iot.device.type">
+        <field name="name">Customer Display</field>
+        <field name="code">customer_display</field>
+        <field name="icon">fa-tv</field>
+        <field name="sequence">80</field>
+        <field name="description">Customer-facing screen / VFD pole display showing order totals.</field>
+    </record>
+
+    <record id="type_fiscal_data" model="iot.device.type">
+        <field name="name">Fiscal Data Module</field>
+        <field name="code">fiscal_data</field>
+        <field name="icon">fa-file-text</field>
+        <field name="sequence">90</field>
+        <field name="description">Country-specific fiscal signature module.</field>
+    </record>
+
+    <record id="type_measuring_tool" model="iot.device.type">
+        <field name="name">Measuring Tool</field>
+        <field name="code">measuring_tool</field>
+        <field name="icon">fa-tachometer</field>
+        <field name="sequence">100</field>
+        <field name="description">Calipers, thermometers, or any serial measuring instrument.</field>
+    </record>
+
+    <record id="type_keyboard" model="iot.device.type">
+        <field name="name">Keyboard / HID</field>
+        <field name="code">keyboard</field>
+        <field name="icon">fa-keyboard-o</field>
+        <field name="sequence">110</field>
+        <field name="description">Generic USB-HID input device.</field>
+    </record>
+
+    <record id="type_generic" model="iot.device.type">
+        <field name="name">Generic Device</field>
+        <field name="code">generic</field>
+        <field name="icon">fa-plug</field>
+        <field name="sequence">999</field>
+        <field name="description">Any device that does not fit a standard category.</field>
+    </record>
+
+</odoo>

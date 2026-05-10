@@ -1,0 +1,18 @@
+/* IoT Custom — backend styles */
+
+.o_iot_pairing_code > input,
+.o_iot_pairing_code .o_field_char input {
+    font-family: "Courier New", monospace;
+    font-size: 22px !important;
+    letter-spacing: 4px;
+    font-weight: bold;
+    color: #17a2b8;
+    background: #f7fbfd;
+    border: 2px dashed #17a2b8 !important;
+    padding: 8px 12px !important;
+}
+
+.o_kanban_view .oe_kanban_card i.fa-microchip,
+.o_kanban_view .oe_kanban_card i.fa-plug {
+    color: #6c757d;
+}

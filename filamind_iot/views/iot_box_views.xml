@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ── Kanban ─────────────────────────────────────────────────────── -->
+    <record id="view_iot_box_kanban" model="ir.ui.view">
+        <field name="name">iot.box.kanban</field>
+        <field name="model">iot.box</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" default_group_by="state">
+                <field name="name"/>
+                <field name="state"/>
+                <field name="device_count"/>
+                <field name="ip_address"/>
+                <field name="is_online"/>
+                <field name="last_heartbeat"/>
+                <field name="color"/>
+                <templates>
+                    <t t-name="card">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click
+                                           oe_kanban_color_#{record.color.raw_value}">
+                            <div class="o_kanban_record_top">
+                                <div class="o_kanban_record_headings">
+                                    <strong><field name="name"/></strong>
+                                    <div class="text-muted">
+                                        <field name="ip_address"/>
+                                    </div>
+                                </div>
+                                <span t-attf-class="badge rounded-pill
+                                    #{record.state.raw_value === 'connected' ? 'text-bg-success' :
+                                      record.state.raw_value === 'pairing' ? 'text-bg-info' :
+                                      record.state.raw_value === 'blocked' ? 'text-bg-danger' :
+                                      'text-bg-secondary'}">
+                                    <field name="state"/>
+                                </span>
+                            </div>
+                            <div class="o_kanban_record_body">
+                                <i class="fa fa-microchip me-1"/>
+                                <field name="device_count"/> devices
+                                <br/>
+                                <i class="fa fa-heartbeat me-1"/>
+                                Last seen: <field name="last_heartbeat"/>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ── List ───────────────────────────────────────────────────────── -->
+    <record id="view_iot_box_list" model="ir.ui.view">
+        <field name="name">iot.box.list</field>
+        <field name="model">iot.box</field>
+        <field name="arch" type="xml">
+            <list string="IoT Boxes"
+                  decoration-success="state == 'connected'"
+                  decoration-info="state == 'pairing'"
+                  decoration-muted="state == 'disconnected'"
+                  decoration-danger="state == 'blocked'">
+                <field name="name"/>
+                <field name="identifier"/>
+                <field name="ip_address"/>
+                <field name="version"/>
+                <field name="device_count" string="Devices"/>
+                <field name="last_heartbeat"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'connected'"
+                       decoration-info="state == 'pairing'"
+                       decoration-danger="state == 'blocked'"/>
+                <field name="user_id" optional="hide"/>
+                <field name="company_id" optional="hide"
+                       groups="base.group_multi_company"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ── Form ───────────────────────────────────────────────────────── -->
+    <record id="view_iot_box_form" model="ir.ui.view">
+        <field name="name">iot.box.form</field>
+        <field name="model">iot.box</field>
+        <field name="arch" type="xml">
+            <form string="IoT Box">
+                <header>
+                    <button name="action_generate_pairing_code" type="object"
+                            string="Pair via Server Code" class="btn-primary"
+                            invisible="state in ('connected','blocked')"/>
+                    <button name="%(action_iot_connect_new_box)d" type="action"
+                            string="Pair via Box Token" class="btn-secondary"
+                            invisible="state == 'connected'"/>
+                    <button name="action_mark_connected" type="object"
+                            string="Mark Connected" class="btn-secondary"
+                            invisible="state == 'connected'"
+                            groups="base.group_system"/>
+                    <button name="action_disconnect" type="object"
+                            string="Disconnect" class="btn-secondary"
+                            invisible="state != 'connected'"/>
+                    <button name="action_block" type="object"
+                            string="Block" class="btn-secondary"
+                            invisible="state == 'blocked'"
+                            groups="base.group_system"/>
+                    <button name="action_unblock" type="object"
+                            string="Unblock" class="btn-secondary"
+                            invisible="state != 'blocked'"
+                            groups="base.group_system"/>
+                    <button name="action_reset_token" type="object"
+                            string="Reset Token" class="btn-secondary"
+                            groups="base.group_system"
+                            confirm="Regenerate the auth token? The box will need to be re-paired."/>
+                    <button name="action_open_homepage" type="object"
+                            string="Open Box Homepage" class="btn-link"
+                            icon="fa-external-link"
+                            invisible="not ip_address"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="new,pairing,connected,disconnected"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_devices" type="object"
+                                class="oe_stat_button" icon="fa-microchip">
+                            <field name="device_count" widget="statinfo"
+                                   string="Devices"/>
+                        </button>
+                        <button name="action_view_logs" type="object"
+                                class="oe_stat_button" icon="fa-history">
+                            <field name="log_count" widget="statinfo"
+                                   string="Log Entries"/>
+                        </button>
+                    </div>
+
+                    <widget name="web_ribbon" title="Blocked"
+                            bg_color="bg-danger"
+                            invisible="state != 'blocked'"/>
+                    <widget name="web_ribbon" title="Online"
+                            bg_color="bg-success"
+                            invisible="not is_online"/>
+
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="e.g. Warehouse IoT Box"/></h1>
+                    </div>
+
+                    <group>
+                        <group string="Identity">
+                            <field name="identifier"
+                                   placeholder="MAC or serial number"/>
+                            <field name="mac_address"/>
+                            <field name="hostname"/>
+                            <field name="version"/>
+                        </group>
+                        <group string="Network">
+                            <field name="ip_address"
+                                   placeholder="192.168.1.50"/>
+                            <field name="ip_url" widget="url"/>
+                            <field name="wifi_ssid"/>
+                            <field name="heartbeat_interval"/>
+                            <field name="last_heartbeat"/>
+                            <field name="is_online"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group string="Pairing">
+                            <field name="pairing_code" readonly="1"/>
+                            <field name="pairing_expiry" readonly="1"/>
+                            <field name="box_pairing_token"
+                                   placeholder="Token shown on the box screen"/>
+                        </group>
+                        <group string="Ownership">
+                            <field name="user_id"/>
+                            <field name="company_id"
+                                   groups="base.group_multi_company"/>
+                            <field name="color" widget="color_picker"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Devices" name="devices">
+                            <field name="device_ids" nolabel="1">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="type_id"/>
+                                    <field name="connection"/>
+                                    <field name="identifier"/>
+                                    <field name="state" widget="badge"
+                                           decoration-success="state == 'online'"
+                                           decoration-muted="state == 'offline'"
+                                           decoration-danger="state == 'error'"/>
+                                    <field name="last_seen"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Activity Log" name="logs">
+                            <field name="connection_log_ids" readonly="1" nolabel="1">
+                                <list>
+                                    <field name="create_date"/>
+                                    <field name="event"/>
+                                    <field name="device_id"/>
+                                    <field name="severity" widget="badge"
+                                           decoration-info="severity == 'info'"
+                                           decoration-warning="severity == 'warn'"
+                                           decoration-danger="severity == 'error'"/>
+                                    <field name="message"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="notes"
+                                   placeholder="Installation notes, support contacts, etc."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ── Search ─────────────────────────────────────────────────────── -->
+    <record id="view_iot_box_search" model="ir.ui.view">
+        <field name="name">iot.box.search</field>
+        <field name="model">iot.box</field>
+        <field name="arch" type="xml">
+            <search string="IoT Boxes">
+                <field name="name"/>
+                <field name="identifier"/>
+                <field name="ip_address"/>
+                <field name="user_id"/>
+                <filter string="Connected" name="connected"
+                        domain="[('state', '=', 'connected')]"/>
+                <filter string="Pairing" name="pairing"
+                        domain="[('state', '=', 'pairing')]"/>
+                <filter string="Disconnected" name="disconnected"
+                        domain="[('state', '=', 'disconnected')]"/>
+                <filter string="Blocked" name="blocked"
+                        domain="[('state', '=', 'blocked')]"/>
+                <filter string="Group by Status" name="group_state"
+                        context="{'group_by': 'state'}"/>
+                <filter string="Group by Responsible" name="group_user"
+                        context="{'group_by': 'user_id'}"/>
+                <filter string="Group by Company" name="group_company"
+                        context="{'group_by': 'company_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ── Action ─────────────────────────────────────────────────────── -->
+    <record id="action_iot_box" model="ir.actions.act_window">
+        <field name="name">IoT Boxes</field>
+        <field name="res_model">iot.box</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="search_view_id" ref="view_iot_box_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No IoT Boxes yet
+            </p>
+            <p>
+                Register your first IoT Box to connect printers, scanners,
+                scales, cameras and payment terminals to Odoo.
+            </p>
+        </field>
+    </record>
+
+</odoo>

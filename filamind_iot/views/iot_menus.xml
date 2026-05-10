@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Root menu — visible to all internal users so the app appears
+         immediately after installation -->
+    <menuitem id="iot_menu_root"
+              name="IoT"
+              web_icon="filamind_iot,static/description/icon.png"
+              sequence="95"/>
+
+    <!-- Main entities -->
+    <menuitem id="iot_menu_boxes"
+              name="IoT Boxes"
+              parent="iot_menu_root"
+              action="action_iot_box"
+              sequence="10"/>
+
+    <menuitem id="iot_menu_connect_box"
+              name="Connect IoT Box"
+              parent="iot_menu_root"
+              action="action_iot_connect_new_box"
+              sequence="15"/>
+
+    <menuitem id="iot_menu_devices"
+              name="Devices"
+              parent="iot_menu_root"
+              action="action_iot_device"
+              sequence="20"/>
+
+    <menuitem id="iot_menu_logs"
+              name="Activity Log"
+              parent="iot_menu_root"
+              action="action_iot_connection_log"
+              sequence="30"/>
+
+    <!-- Configuration submenu -->
+    <menuitem id="iot_menu_config"
+              name="Configuration"
+              parent="iot_menu_root"
+              sequence="90"
+              groups="base.group_system"/>
+
+    <menuitem id="iot_menu_device_types"
+              name="Device Types"
+              parent="iot_menu_config"
+              action="action_iot_device_type"
+              sequence="10"/>
+
+    <menuitem id="iot_menu_settings"
+              name="Settings"
+              parent="iot_menu_config"
+              action="action_iot_config_settings"
+              sequence="99"
+              groups="base.group_system"/>
+
+</odoo>

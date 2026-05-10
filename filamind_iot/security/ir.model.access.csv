@@ -1,0 +1,10 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_iot_device_type_user,iot.device.type user,model_iot_device_type,base.group_user,1,0,0,0
+access_iot_device_type_admin,iot.device.type admin,model_iot_device_type,base.group_system,1,1,1,1
+access_iot_box_user,iot.box user,model_iot_box,base.group_user,1,1,1,0
+access_iot_box_admin,iot.box admin,model_iot_box,base.group_system,1,1,1,1
+access_iot_device_user,iot.device user,model_iot_device,base.group_user,1,1,1,0
+access_iot_device_admin,iot.device admin,model_iot_device,base.group_system,1,1,1,1
+access_iot_connection_log_user,iot.connection.log user,model_iot_connection_log,base.group_user,1,0,0,0
+access_iot_connection_log_admin,iot.connection.log admin,model_iot_connection_log,base.group_system,1,1,1,1
+access_iot_pairing_wizard_user,iot.pairing.wizard user,model_iot_pairing_wizard,base.group_user,1,1,1,1

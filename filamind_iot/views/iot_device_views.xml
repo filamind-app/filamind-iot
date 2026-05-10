@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ── Kanban ─────────────────────────────────────────────────────── -->
+    <record id="view_iot_device_kanban" model="ir.ui.view">
+        <field name="name">iot.device.kanban</field>
+        <field name="model">iot.device</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="type_id">
+                <field name="name"/>
+                <field name="state"/>
+                <field name="type_id"/>
+                <field name="type_icon"/>
+                <field name="iot_box_id"/>
+                <field name="connection"/>
+                <field name="color"/>
+                <templates>
+                    <t t-name="card">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click
+                                           oe_kanban_color_#{record.color.raw_value}">
+                            <div class="o_kanban_record_top">
+                                <i t-attf-class="fa #{record.type_icon.raw_value || 'fa-plug'} fa-2x me-2"/>
+                                <div class="o_kanban_record_headings">
+                                    <strong><field name="name"/></strong>
+                                    <div class="text-muted">
+                                        <field name="iot_box_id"/>
+                                    </div>
+                                </div>
+                                <span t-attf-class="badge rounded-pill
+                                    #{record.state.raw_value === 'online' ? 'text-bg-success' :
+                                      record.state.raw_value === 'error' ? 'text-bg-danger' :
+                                      record.state.raw_value === 'disabled' ? 'text-bg-dark' :
+                                      'text-bg-secondary'}">
+                                    <field name="state"/>
+                                </span>
+                            </div>
+                            <div class="o_kanban_record_body">
+                                <field name="connection"/>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ── List ───────────────────────────────────────────────────────── -->
+    <record id="view_iot_device_list" model="ir.ui.view">
+        <field name="name">iot.device.list</field>
+        <field name="model">iot.device</field>
+        <field name="arch" type="xml">
+            <list string="Devices"
+                  decoration-success="state == 'online'"
+                  decoration-muted="state == 'offline'"
+                  decoration-danger="state == 'error'"
+                  decoration-bf="state == 'disabled'">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="iot_box_id"/>
+                <field name="type_id"/>
+                <field name="connection"/>
+                <field name="identifier"/>
+                <field name="manufacturer" optional="hide"/>
+                <field name="model_name" optional="hide"/>
+                <field name="last_seen"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'online'"
+                       decoration-muted="state == 'offline'"
+                       decoration-danger="state == 'error'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ── Form ───────────────────────────────────────────────────────── -->
+    <record id="view_iot_device_form" model="ir.ui.view">
+        <field name="name">iot.device.form</field>
+        <field name="model">iot.device</field>
+        <field name="arch" type="xml">
+            <form string="Device">
+                <header>
+                    <button name="action_test" type="object"
+                            string="Test Device" class="btn-primary"
+                            invisible="state == 'disabled'"/>
+                    <button name="action_enable" type="object"
+                            string="Enable" class="btn-secondary"
+                            invisible="state != 'disabled'"/>
+                    <button name="action_disable" type="object"
+                            string="Disable" class="btn-secondary"
+                            invisible="state == 'disabled'"
+                            groups="base.group_system"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="offline,online,error"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_logs" type="object"
+                                class="oe_stat_button" icon="fa-history">
+                            <field name="log_count" widget="statinfo"
+                                   string="Log Entries"/>
+                        </button>
+                    </div>
+
+                    <widget name="web_ribbon" title="Disabled"
+                            bg_color="bg-secondary"
+                            invisible="state != 'disabled'"/>
+
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="e.g. Epson TM-T20 / Cashier 1"/></h1>
+                    </div>
+
+                    <group>
+                        <group string="Identity">
+                            <field name="type_id"/>
+                            <field name="iot_box_id"/>
+                            <field name="connection"/>
+                            <field name="identifier"/>
+                            <field name="manufacturer"/>
+                            <field name="model_name"/>
+                            <field name="subtype"/>
+                        </group>
+                        <group string="Status">
+                            <field name="last_seen"/>
+                            <field name="active"/>
+                            <field name="sequence"/>
+                            <field name="color" widget="color_picker"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Usage" name="usage">
+                            <group>
+                                <field name="use_in_pos"/>
+                                <field name="use_in_inventory"/>
+                                <field name="use_in_manufacturing"/>
+                            </group>
+                        </page>
+                        <page string="Printer Settings" name="printer"
+                              invisible="type_code not in ('receipt_printer','label_printer')">
+                            <group>
+                                <field name="paper_width"/>
+                                <field name="report_id"
+                                       domain="[('report_type', 'in', ('qweb-pdf','qweb-html'))]"/>
+                            </group>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="notes"/>
+                        </page>
+                    </notebook>
+
+                    <field name="type_code" invisible="1"/>
+                    <field name="type_icon" invisible="1"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ── Search ─────────────────────────────────────────────────────── -->
+    <record id="view_iot_device_search" model="ir.ui.view">
+        <field name="name">iot.device.search</field>
+        <field name="model">iot.device</field>
+        <field name="arch" type="xml">
+            <search string="Devices">
+                <field name="name"/>
+                <field name="iot_box_id"/>
+                <field name="type_id"/>
+                <field name="identifier"/>
+                <field name="manufacturer"/>
+                <filter string="Online" name="online"
+                        domain="[('state', '=', 'online')]"/>
+                <filter string="Offline" name="offline"
+                        domain="[('state', '=', 'offline')]"/>
+                <filter string="Error" name="error"
+                        domain="[('state', '=', 'error')]"/>
+                <filter string="Used in POS" name="pos"
+                        domain="[('use_in_pos', '=', True)]"/>
+                <filter string="Group by IoT Box" name="group_box"
+                        context="{'group_by': 'iot_box_id'}"/>
+                <filter string="Group by Type" name="group_type"
+                        context="{'group_by': 'type_id'}"/>
+                <filter string="Group by Status" name="group_state"
+                        context="{'group_by': 'state'}"/>
+                <filter string="Group by Connection" name="group_connection"
+                        context="{'group_by': 'connection'}"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ── Action ─────────────────────────────────────────────────────── -->
+    <record id="action_iot_device" model="ir.actions.act_window">
+        <field name="name">Devices</field>
+        <field name="res_model">iot.device</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="search_view_id" ref="view_iot_device_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No devices registered yet
+            </p>
+            <p>
+                Devices are auto-discovered once an IoT Box is paired.
+                You can also add them manually.
+            </p>
+        </field>
+    </record>
+
+</odoo>

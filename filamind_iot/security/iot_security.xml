@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Multi-company rule on iot.box -->
+    <record id="iot_box_company_rule" model="ir.rule">
+        <field name="name">IoT Box: multi-company</field>
+        <field name="model_id" ref="model_iot_box"/>
+        <field name="domain_force">
+            ['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]
+        </field>
+    </record>
+
+    <!-- Multi-company rule on iot.device (via stored related company_id) -->
+    <record id="iot_device_company_rule" model="ir.rule">
+        <field name="name">IoT Device: multi-company</field>
+        <field name="model_id" ref="model_iot_device"/>
+        <field name="domain_force">
+            ['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]
+        </field>
+    </record>
+
+    <!-- Multi-company rule on iot.connection.log (via stored related company_id) -->
+    <record id="iot_connection_log_company_rule" model="ir.rule">
+        <field name="name">IoT Connection Log: multi-company</field>
+        <field name="model_id" ref="model_iot_connection_log"/>
+        <field name="domain_force">
+            ['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]
+        </field>
+    </record>
+
+</odoo>

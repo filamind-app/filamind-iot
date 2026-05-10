@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Every 2 minutes: mark silent boxes as disconnected -->
+    <record id="cron_iot_stale_boxes" model="ir.cron">
+        <field name="name">IoT: detect disconnected boxes</field>
+        <field name="model_id" ref="model_iot_box"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_check_stale_boxes()</field>
+        <field name="interval_number">2</field>
+        <field name="interval_type">minutes</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <!-- Daily: purge old connection logs according to retention setting -->
+    <record id="cron_iot_purge_logs" model="ir.cron">
+        <field name="name">IoT: purge old connection logs</field>
+        <field name="model_id" ref="model_iot_connection_log"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_purge_old_logs()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+    </record>
+
+</odoo>

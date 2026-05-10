@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_iot_connection_log_list" model="ir.ui.view">
+        <field name="name">iot.connection.log.list</field>
+        <field name="model">iot.connection.log</field>
+        <field name="arch" type="xml">
+            <list string="IoT Activity"
+                  decoration-info="severity == 'info'"
+                  decoration-warning="severity == 'warn'"
+                  decoration-danger="severity == 'error'">
+                <field name="create_date" string="When"/>
+                <field name="iot_box_id"/>
+                <field name="device_id"/>
+                <field name="event"/>
+                <field name="severity" widget="badge"
+                       decoration-info="severity == 'info'"
+                       decoration-warning="severity == 'warn'"
+                       decoration-danger="severity == 'error'"/>
+                <field name="message"/>
+                <field name="ip_address" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_iot_connection_log_form" model="ir.ui.view">
+        <field name="name">iot.connection.log.form</field>
+        <field name="model">iot.connection.log</field>
+        <field name="arch" type="xml">
+            <form string="Log Entry">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="create_date" readonly="1"/>
+                            <field name="iot_box_id"/>
+                            <field name="device_id"/>
+                        </group>
+                        <group>
+                            <field name="event"/>
+                            <field name="severity"/>
+                            <field name="ip_address"/>
+                        </group>
+                    </group>
+                    <group string="Message">
+                        <field name="message" nolabel="1"/>
+                    </group>
+                    <group string="Payload">
+                        <field name="payload" nolabel="1" widget="text"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_iot_connection_log_search" model="ir.ui.view">
+        <field name="name">iot.connection.log.search</field>
+        <field name="model">iot.connection.log</field>
+        <field name="arch" type="xml">
+            <search string="Activity">
+                <field name="iot_box_id"/>
+                <field name="device_id"/>
+                <field name="event"/>
+                <field name="message"/>
+                <filter string="Errors" name="errors"
+                        domain="[('severity', '=', 'error')]"/>
+                <filter string="Warnings" name="warnings"
+                        domain="[('severity', '=', 'warn')]"/>
+                <filter string="Heartbeats" name="heartbeats"
+                        domain="[('event', '=', 'heartbeat')]"/>
+                <filter string="Group by IoT Box" name="group_box"
+                        context="{'group_by': 'iot_box_id'}"/>
+                <filter string="Group by Device" name="group_device"
+                        context="{'group_by': 'device_id'}"/>
+                <filter string="Group by Event" name="group_event"
+                        context="{'group_by': 'event'}"/>
+                <filter string="Group by Severity" name="group_severity"
+                        context="{'group_by': 'severity'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_iot_connection_log" model="ir.actions.act_window">
+        <field name="name">Activity Log</field>
+        <field name="res_model">iot.connection.log</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_iot_connection_log_search"/>
+    </record>
+
+</odoo>

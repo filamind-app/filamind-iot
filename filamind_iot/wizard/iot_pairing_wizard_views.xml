@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_iot_pairing_wizard_form" model="ir.ui.view">
+        <field name="name">iot.pairing.wizard.form</field>
+        <field name="model">iot.pairing.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Pair IoT Box">
+                <sheet>
+
+                    <div class="alert alert-info mb-3"
+                         invisible="pairing_mode != 'server'">
+                        <i class="fa fa-info-circle me-2"/>
+                        Enter the pairing code below on your IoT Box's homepage.
+                    </div>
+                    <div class="alert alert-info mb-3"
+                         invisible="pairing_mode != 'box'">
+                        <i class="fa fa-desktop me-2"/>
+                        Copy the token displayed on the IoT Box screen into the
+                        <b>Box Token</b> field below.
+                    </div>
+
+                    <group>
+                        <field name="pairing_mode" widget="radio"/>
+                    </group>
+
+                    <!-- ── Server-code mode ──────────────────────────── -->
+                    <group invisible="pairing_mode != 'server'">
+                        <group string="Pairing">
+                            <field name="iot_box_id" readonly="1"
+                                   required="pairing_mode == 'server'"/>
+                            <field name="pairing_code" readonly="1"
+                                   class="o_iot_pairing_code"/>
+                            <field name="server_url" readonly="1"/>
+                        </group>
+                        <group string="Identify the Box (optional)">
+                            <field name="identifier"
+                                   placeholder="MAC / serial"/>
+                            <field name="ip_address"
+                                   placeholder="192.168.1.50"/>
+                        </group>
+                    </group>
+
+                    <!-- ── Box-token mode ────────────────────────────── -->
+                    <group invisible="pairing_mode != 'box'">
+                        <group string="From the IoT Box Screen">
+                            <field name="box_token"
+                                   placeholder="e.g. 4F8A-2C31-9BE7"
+                                   required="pairing_mode == 'box'"/>
+                            <field name="box_name"
+                                   placeholder="e.g. Warehouse IoT Box"/>
+                            <field name="iot_box_id"
+                                   string="Existing Box (optional)"
+                                   invisible="pairing_mode != 'box'"
+                                   options="{'no_create': True}"/>
+                        </group>
+                        <group string="Identify the Box (optional)">
+                            <field name="identifier"
+                                   placeholder="MAC / serial"/>
+                            <field name="ip_address"
+                                   placeholder="192.168.1.50"/>
+                        </group>
+                    </group>
+
+                    <group string="Instructions">
+                        <field name="instructions" nolabel="1" readonly="1"/>
+                    </group>
+
+                </sheet>
+                <footer>
+                    <button name="action_confirm_paired" type="object"
+                            string="I've Paired" class="btn-primary"
+                            icon="fa-check"
+                            invisible="pairing_mode != 'server'"/>
+                    <button name="action_confirm_paired" type="object"
+                            string="Connect Box" class="btn-primary"
+                            icon="fa-plug"
+                            invisible="pairing_mode != 'box'"/>
+                    <button string="Close" class="btn-secondary"
+                            special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action: open wizard directly in box-token mode. -->
+    <record id="action_iot_connect_new_box" model="ir.actions.act_window">
+        <field name="name">Connect IoT Box</field>
+        <field name="res_model">iot.pairing.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_iot_pairing_wizard_form"/>
+        <field name="target">new</field>
+        <field name="context">{'default_pairing_mode': 'box'}</field>
+    </record>
+
+</odoo>
