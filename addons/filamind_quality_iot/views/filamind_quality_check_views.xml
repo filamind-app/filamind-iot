@@ -36,7 +36,8 @@
                     <button name="action_fail" type="object"
                             string="Fail" class="btn-danger"
                             invisible="state == 'fail'"/>
-                    <button name="_iot_request_measurement" type="object"
+                    <button name="action_iot_request_measurement"
+                            type="object"
                             string="Re-read from IoT"
                             class="btn-secondary" icon="fa-bolt"
                             invisible="not point_id"/>

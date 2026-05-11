@@ -651,3 +651,112 @@ class IotController(http.Controller):
 def _box_default_name(identifier):
     short = identifier[:8] if identifier else 'unknown'
     return 'IoT Box %s' % short
+
+
+# ── Production hardening: health + metrics endpoints ─────────────────
+class FilamindOpsController(http.Controller):
+    """Operational endpoints for monitoring tools (Prometheus,
+    Kubernetes liveness/readiness probes, uptime checkers, etc.).
+
+    Both endpoints are auth='public' — they expose ONLY aggregate
+    counts, never device identifiers, tokens, or PII. Safe to point
+    a public uptime probe at /filamind_iot/health."""
+
+    @http.route(['/filamind_iot/health', '/iot/box/health'],
+                type='http', auth='public', methods=['GET'], csrf=False)
+    def health(self, **_):
+        """Returns 200 + JSON when Odoo + Postgres are reachable,
+        500 otherwise. Used by k8s liveness probes / uptime
+        monitoring."""
+        try:
+            request.env.cr.execute('SELECT 1')
+            request.env.cr.fetchone()
+            return _json_response({
+                'status': 'ok',
+                'service': 'filamind-iot',
+                'time': fields.Datetime.now().isoformat(),
+            })
+        except Exception:
+            _logger.exception('health probe failed')
+            return _json_response({'status': 'degraded'}, status=500)
+
+    @http.route(['/filamind_iot/metrics', '/iot/box/metrics'],
+                type='http', auth='public', methods=['GET'], csrf=False)
+    def metrics(self, **_):
+        """Prometheus exposition format. Exposes aggregate gauges
+        + counters across all iot.box / iot.device / iot.command.queue
+        rows. No identifiers, no tokens — safe to scrape from a
+        public Prometheus instance over the LAN."""
+        try:
+            env = request.env
+            now = fields.Datetime.now()
+            box = env['iot.box'].sudo()
+            dev = env['iot.device'].sudo()
+            cmd = env['iot.command.queue'].sudo()
+
+            box_total = box.search_count([])
+            box_connected = box.search_count([('state', '=', 'connected')])
+            box_disconnected = box.search_count(
+                [('state', '=', 'disconnected')])
+
+            dev_total = dev.search_count([('active', '=', True)])
+            dev_online = dev.search_count(
+                [('active', '=', True), ('state', '=', 'online')])
+            dev_offline = dev.search_count(
+                [('active', '=', True), ('state', '=', 'offline')])
+            dev_error = dev.search_count(
+                [('active', '=', True), ('state', '=', 'error')])
+
+            cmd_pending = cmd.search_count([('state', '=', 'sent')])
+            cmd_completed_24h = cmd.search_count([
+                ('state', '=', 'completed'),
+                ('write_date', '>=', fields.Datetime.subtract(
+                    now, hours=24)),
+            ])
+            cmd_failed_24h = cmd.search_count([
+                ('state', '=', 'failed'),
+                ('write_date', '>=', fields.Datetime.subtract(
+                    now, hours=24)),
+            ])
+
+            lines = [
+                '# HELP filamind_iot_boxes_total Total iot.box records',
+                '# TYPE filamind_iot_boxes_total gauge',
+                'filamind_iot_boxes_total %d' % box_total,
+                '# HELP filamind_iot_boxes_state Boxes by state',
+                '# TYPE filamind_iot_boxes_state gauge',
+                'filamind_iot_boxes_state{state="connected"} %d'
+                    % box_connected,
+                'filamind_iot_boxes_state{state="disconnected"} %d'
+                    % box_disconnected,
+                '# HELP filamind_iot_devices_total Active iot.device records',
+                '# TYPE filamind_iot_devices_total gauge',
+                'filamind_iot_devices_total %d' % dev_total,
+                '# HELP filamind_iot_devices_state Active devices by state',
+                '# TYPE filamind_iot_devices_state gauge',
+                'filamind_iot_devices_state{state="online"} %d' % dev_online,
+                'filamind_iot_devices_state{state="offline"} %d'
+                    % dev_offline,
+                'filamind_iot_devices_state{state="error"} %d' % dev_error,
+                '# HELP filamind_iot_commands_pending Currently in-flight cmds',
+                '# TYPE filamind_iot_commands_pending gauge',
+                'filamind_iot_commands_pending %d' % cmd_pending,
+                '# HELP filamind_iot_commands_24h Commands in last 24h',
+                '# TYPE filamind_iot_commands_24h counter',
+                'filamind_iot_commands_24h{outcome="completed"} %d'
+                    % cmd_completed_24h,
+                'filamind_iot_commands_24h{outcome="failed"} %d'
+                    % cmd_failed_24h,
+                '',
+            ]
+            return Response(
+                '\n'.join(lines),
+                mimetype='text/plain; version=0.0.4',
+            )
+        except Exception:
+            _logger.exception('metrics endpoint failed')
+            return Response(
+                '# filamind metrics error\n',
+                status=500,
+                mimetype='text/plain; version=0.0.4',
+            )

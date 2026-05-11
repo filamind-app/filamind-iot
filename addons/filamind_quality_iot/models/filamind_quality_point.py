@@ -104,7 +104,7 @@ class FilamindQualityPoint(models.Model):
         # If point has an IoT device, dispatch a measurement command
         if self.iot_device_id and self.test_type in ('measure', 'picture'):
             try:
-                check._iot_request_measurement()
+                check.action_iot_request_measurement()
             except Exception as exc:
                 raise UserError(_(
                     "Could not contact the IoT device: %s") % exc) from exc

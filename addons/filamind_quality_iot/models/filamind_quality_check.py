@@ -69,7 +69,7 @@ class FilamindQualityCheck(models.Model):
         return super().create(vals_list)
 
     # ── IoT integration ──────────────────────────────────────────────
-    def _iot_request_measurement(self):
+    def action_iot_request_measurement(self):
         """Dispatch an iot_action to the point's device. The result lands
         on iot.command.queue.response_payload; a small post-write hook
         below copies the value back into measure_value (or picture).

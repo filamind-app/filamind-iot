@@ -6,6 +6,31 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added — Phase 24: production hardening (health + Prometheus) + view-button fix
+
+> Operational endpoints for monitoring tools, plus a fix for the
+> latest Odoo-19 view validator failure on a private button name.
+
+- New endpoint `GET /filamind_iot/health` (alias `/iot/box/health`):
+  returns `200 + JSON` when Odoo + Postgres are reachable,
+  `500 + JSON` otherwise. For Kubernetes liveness / readiness
+  probes and uptime checkers. `auth='public'` — no token
+  required, no PII / identifiers exposed.
+- New endpoint `GET /filamind_iot/metrics` (alias
+  `/iot/box/metrics`): Prometheus exposition-format gauges +
+  counters, no labels containing identifiers / tokens / PII —
+  safe for public scraping over a LAN. Exposes:
+  * `filamind_iot_boxes_total`
+  * `filamind_iot_boxes_state{state=…}` (connected, disconnected)
+  * `filamind_iot_devices_total`
+  * `filamind_iot_devices_state{state=…}` (online, offline, error)
+  * `filamind_iot_commands_pending`
+  * `filamind_iot_commands_24h{outcome=…}` (completed, failed)
+- `filamind_quality_iot`: rename `_iot_request_measurement` →
+  `action_iot_request_measurement`. Odoo 19's view validator
+  refuses to invoke private (underscore-prefixed) methods from
+  XML buttons. Caller in `filamind.quality.point` updated too.
+
 ### Added — Phase 23: Docker image + GHCR release automation
 
 > One-click run with `docker compose up -d` — useful for support
