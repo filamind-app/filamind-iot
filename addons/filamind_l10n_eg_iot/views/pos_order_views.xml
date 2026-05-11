@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_pos_order_form_l10n_eg_iot" model="ir.ui.view">
+        <field name="name">pos.order.form.l10n_eg_iot</field>
+        <field name="model">pos.order</field>
+        <field name="inherit_id" ref="point_of_sale.view_pos_pos_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="ETA Fiscal IoT (filamind)"
+                       name="filamind_l10n_eg_iot_order_group">
+                    <field name="iot_eg_fiscal_print_command_id"
+                           readonly="1"/>
+                    <field name="iot_eg_fiscal_uuid" readonly="1"/>
+                    <field name="iot_eg_fiscal_qr" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

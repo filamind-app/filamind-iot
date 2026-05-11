@@ -6,6 +6,40 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added — Phase 9: filamind_l10n_eg_iot new addon (v0.1.0)
+
+> Roadmap Phase 9 of 16. Egyptian Tax Authority (ETA) hardware-fiscal
+> printer integration on the IoT side. The signing happens **inside
+> the device**; this addon dispatches the receipt to it and captures
+> the device-issued UUID/QR for downstream e-receipt submission. The
+> actual ETA submission API belongs in a localization EDI addon and
+> is deliberately out of scope here.
+
+- `pos.config.iot_eg_fiscal_printer_id` — receipt printer (or
+  Fiscal Data Module device) that signs receipts. Filtered to
+  `type_id.code in ('receipt_printer', 'fiscal_data')`.
+- `pos.config.action_iot_eg_test_fiscal()` — round-trip test button
+  (sends a small `fiscal_print` action and opens the resulting
+  iot.command.queue form).
+- `pos.order.iot_eg_fiscal_print_command_id` (m2o → iot.command.queue,
+  readonly) — traceability link for the fiscal print job.
+- `pos.order.iot_eg_fiscal_uuid` and `iot_eg_fiscal_qr` (readonly)
+  — signature data the box reports back from the fiscal printer.
+  A downstream `l10n_eg_eta_edi` addon is expected to read these
+  fields and submit them to ETA.
+- Hook on `pos.order.action_pos_order_paid`: when the order is
+  paid on a config with a fiscal printer set, the order body is
+  sent via `iot.box.send_bus_message` with `action='fiscal_print'`
+  and the command queue id is stored on the order. Failures swallow
+  silently so they never block the paid flow — staff retry from
+  the order form, or a future ETA-resubmission cron picks up
+  unsigned orders.
+- `_filamind_render_eg_fiscal_body()` returns the plain-text body —
+  override for ESC/POS, ESC/Z, or vendor-specific fiscal protocols.
+- `_filamind_apply_eg_fiscal_response(uuid, qr)` — entry point the
+  IoT controller / cron calls when the box reports the device's
+  signature.
+
 ### Added — Phase 8: filamind_event_iot new addon (v0.1.0)
 
 > Roadmap Phase 8 of 16. Bridges the LGPL `event` module with the

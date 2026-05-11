@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_pos_config_form_l10n_eg_iot" model="ir.ui.view">
+        <field name="name">pos.config.form.l10n_eg_iot</field>
+        <field name="model">pos.config</field>
+        <field name="inherit_id" ref="point_of_sale.pos_config_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="ETA Fiscal IoT (filamind)"
+                       name="filamind_l10n_eg_iot_group">
+                    <field name="iot_eg_fiscal_printer_id"
+                           options="{'no_create': True}"/>
+                    <button name="action_iot_eg_test_fiscal"
+                            string="Test Fiscal Printer"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="not iot_eg_fiscal_printer_id"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
