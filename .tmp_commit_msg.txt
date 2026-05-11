@@ -1,0 +1,36 @@
+refactor: drop Docker, ship addons-zip on release tag instead
+
+filamind-iot is an Odoo addon suite, not a server. Shipping a
+Docker image was misguided — it bundled redundant copies of Odoo
++ Postgres + Caddy that any user already running Odoo doesn't
+need, and confused the product's positioning.
+
+Removed
+-------
+* Dockerfile
+* docker-compose.yml
+* docker/ (Caddyfile, entrypoint.sh, odoo.conf template)
+* .github/workflows/release-docker.yml (the GHCR multi-arch
+  build that was running for v1.1.0 — cancelled mid-flight)
+
+Added
+-----
+* .github/workflows/release-addons-zip.yml — on every v*.*.* tag
+  (or per-addon <addon>/v*.*.* tag), packs the relevant
+  addon directory(ies) into a deterministic, sorted,
+  pycache-stripped zip + a .sha256 sidecar, and attaches both to
+  the GitHub Release. The canonical install artifact.
+
+Docs
+----
+* docs/INSTALL.md — Method A is now the release-zip download
+  (curl + sha256sum -c + unzip into addons_path); Method B
+  remains git clone for tracking-main use.
+* README's "Run inside a fresh Odoo" Docker snippet replaced
+  with the `odoo -i filamind_iot_full --stop-after-init` CLI
+  smoke-test against a pre-existing Odoo install.
+* "Containers" guidance in INSTALL.md now generic — works with
+  any Odoo 19 image, not an opinionated bundled one.
+* CHANGELOG entry added at the top of [Unreleased].
+
+Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>

@@ -1,0 +1,157 @@
+name: Release addons zip
+
+# On every git tag of the form v*.*.* (project-wide milestone) or
+# <addon>/v*.*.* (per-addon), pack the relevant addon directory(ies)
+# into a zip and upload it to the GitHub Release.
+#
+# This is the canonical install artifact:
+#   1. Download filamind-iot-vX.Y.Z.zip from the Release page.
+#   2. Unzip into your Odoo addons_path.
+#   3. Restart Odoo, install the modules from the Apps screen.
+#
+# (Or `git clone` the repo and skip this step entirely — both work.)
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+      - 'filamind_*/v*.*.*'
+  workflow_dispatch:
+
+permissions:
+  contents: write    # required to attach release assets
+
+jobs:
+  build-and-attach:
+    name: Pack addons + attach to GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve tag scope
+        id: scope
+        run: |
+          ref="${GITHUB_REF##refs/tags/}"
+          # Two tag styles:
+          #   v1.2.3                       -> pack EVERY addon
+          #   filamind_pos_iot/v1.2.3      -> pack just that addon
+          if [[ "$ref" == */v* ]]; then
+            addon="${ref%%/v*}"
+            version="${ref##*/v}"
+            scope="$addon"
+          else
+            addon=""
+            version="${ref##v}"
+            scope="all"
+          fi
+          echo "ref=${ref}"      >>"$GITHUB_OUTPUT"
+          echo "addon=${addon}"  >>"$GITHUB_OUTPUT"
+          echo "version=${version}" >>"$GITHUB_OUTPUT"
+          echo "scope=${scope}"  >>"$GITHUB_OUTPUT"
+          echo "::notice::Packing scope=${scope} version=${version}"
+
+      - name: Build the zip
+        id: pack
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          if [[ "${{ steps.scope.outputs.scope }}" == "all" ]]; then
+            zipname="filamind-iot-v${{ steps.scope.outputs.version }}.zip"
+            (
+              cd addons
+              # Sort so the zip is deterministic across runs
+              find . -mindepth 1 -maxdepth 1 -type d \
+                  | grep -v '__pycache__' | sort > /tmp/addon_list
+              cat /tmp/addon_list
+              zip -r -X "../dist/${zipname}" \
+                  $(cat /tmp/addon_list) \
+                  -x '*/__pycache__/*' '*.pyc' '*.pyo' '*.pyd'
+            )
+          else
+            addon="${{ steps.scope.outputs.addon }}"
+            zipname="${addon}-v${{ steps.scope.outputs.version }}.zip"
+            if [[ ! -d "addons/${addon}" ]]; then
+                echo "::error::addon directory not found: addons/${addon}"
+                exit 1
+            fi
+            (
+              cd addons
+              zip -r -X "../dist/${zipname}" "${addon}" \
+                  -x '*/__pycache__/*' '*.pyc' '*.pyo' '*.pyd'
+            )
+          fi
+          echo "zipname=${zipname}" >>"$GITHUB_OUTPUT"
+          ls -lh "dist/${zipname}"
+
+      - name: Compute SHA-256
+        id: sha
+        run: |
+          cd dist
+          sha=$(sha256sum "${{ steps.pack.outputs.zipname }}" \
+                  | awk '{print $1}')
+          echo "${sha}  ${{ steps.pack.outputs.zipname }}" \
+              > "${{ steps.pack.outputs.zipname }}.sha256"
+          echo "sha=${sha}" >>"$GITHUB_OUTPUT"
+          cat "${{ steps.pack.outputs.zipname }}.sha256"
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          ref="${{ steps.scope.outputs.ref }}"
+          version="${{ steps.scope.outputs.version }}"
+          if [[ "${{ steps.scope.outputs.scope }}" == "all" ]]; then
+              title="filamind-iot v${version}"
+              body=$(cat <<EOF
+          ## filamind-iot v${version}
+
+          Drop-in install — the full 14-addon LGPL-3 IoT suite for Odoo 19.
+
+          ### Install
+
+          1. Download \`${{ steps.pack.outputs.zipname }}\`.
+          2. Verify (optional): \`sha256sum -c ${{ steps.pack.outputs.zipname }}.sha256\`
+             — should print \`OK\`. Hash: \`${{ steps.sha.outputs.sha }}\`.
+          3. Unzip into your Odoo addons_path:
+             \`\`\`bash
+             unzip ${{ steps.pack.outputs.zipname }} \\
+                  -d /opt/odoo/custom-addons/filamind-iot/addons/
+             \`\`\`
+          4. Restart Odoo, then install **Filamind IoT — Full Suite**
+             (\`filamind_iot_full\`) from the Apps screen — it pulls every
+             other filamind addon in transitively.
+
+          See [INSTALL.md](https://github.com/${{ github.repository }}/blob/v${version}/docs/INSTALL.md)
+          for per-platform setup, reverse-proxy recipes, and the
+          filamind-iotbox box-side install.
+
+          ### Upgrade from a previous version
+
+          Same as install — Odoo's _Update Apps List_ + _Upgrade_ on each
+          installed module picks up the new code.
+
+          ### What's in the zip
+
+          \`addons/\` directory only — no Odoo, no Postgres, no Docker.
+          Pair with your existing Odoo 19 deployment.
+          EOF
+              )
+          else
+              addon="${{ steps.scope.outputs.addon }}"
+              title="${addon} v${version}"
+              body="Per-addon release of \\\`${addon}\\\`. Drop-in unzip into your Odoo addons_path."
+          fi
+
+          gh release view "${ref}" --repo "${{ github.repository }}" >/dev/null 2>&1 \
+              && gh release upload "${ref}" \
+                  "dist/${{ steps.pack.outputs.zipname }}" \
+                  "dist/${{ steps.pack.outputs.zipname }}.sha256" \
+                  --repo "${{ github.repository }}" --clobber \
+              || gh release create "${ref}" \
+                  "dist/${{ steps.pack.outputs.zipname }}" \
+                  "dist/${{ steps.pack.outputs.zipname }}.sha256" \
+                  --repo "${{ github.repository }}" \
+                  --title "${title}" --notes "${body}"

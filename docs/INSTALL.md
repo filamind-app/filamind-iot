@@ -21,15 +21,29 @@ For per-platform reverse-proxy setup, see
 - A reverse proxy in front of Odoo (nginx / Caddy / Apache /
   Traefik / HAProxy) — see REVERSE_PROXY_PLATFORMS.md.
 
-### Drop-in addon path
+### Drop-in addon path — choose either method
+
+**Method A — release zip (recommended for production):**
+
+```bash
+# Pick the latest version from
+#   https://github.com/filamind-app/filamind-iot/releases
+curl -fsSLO https://github.com/filamind-app/filamind-iot/releases/download/v1.1.0/filamind-iot-v1.1.0.zip
+curl -fsSLO https://github.com/filamind-app/filamind-iot/releases/download/v1.1.0/filamind-iot-v1.1.0.zip.sha256
+sha256sum -c filamind-iot-v1.1.0.zip.sha256
+mkdir -p /opt/odoo/custom-addons/filamind-iot/addons
+unzip filamind-iot-v1.1.0.zip -d /opt/odoo/custom-addons/filamind-iot/addons/
+```
+
+**Method B — git clone (for tracking main / dev work):**
 
 ```bash
 git clone https://github.com/filamind-app/filamind-iot \
     /opt/odoo/custom-addons/filamind-iot
 ```
 
-In `odoo.conf`, point the `addons_path` at the repo's `addons/`
-subdirectory:
+Either way, in `odoo.conf` point the `addons_path` at the
+`addons/` directory:
 
 ```ini
 [options]
@@ -79,8 +93,12 @@ To install only a subset (e.g. POS without the kitchen display):
 - **aaPanel**: works with the vanilla nginx recipe.
 - **Plesk / cPanel**: enable `mod_proxy_wstunnel` (Apache) or paste
   the nginx snippet (nginx mode).
-- **Docker**: official `odoo:19` image works as long as you
-  also expose port 8072 and configure `gevent_port`.
+- **Containers**: works with any Odoo 19 image (official
+  `odoo:19`, OCA images, custom builds) as long as the
+  container exposes port 8072 and `odoo.conf` has
+  `proxy_mode = True` + `gevent_port = 8072`. Mount the
+  unzipped `addons/` directory into the container's
+  `addons_path`.
 
 ---
 
