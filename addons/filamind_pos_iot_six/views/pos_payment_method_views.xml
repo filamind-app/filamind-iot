@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_pos_payment_method_form_six" model="ir.ui.view">
+        <field name="name">pos.payment.method.form.six</field>
+        <field name="model">pos.payment.method</field>
+        <field name="inherit_id"
+               ref="point_of_sale.pos_payment_method_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="Six Terminal (filamind)"
+                       name="filamind_pos_iot_six_group"
+                       invisible="not iot_terminal_id">
+                    <field name="iot_six_terminal_id"/>
+                    <field name="iot_six_protocol"/>
+                    <field name="iot_six_supports_tip"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

@@ -6,6 +6,38 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added — Phase 12: filamind_pos_iot_six new addon (v0.1.0)
+
+> Roadmap Phase 12 of 16. Six (Worldline-AG-owned, formerly SIX
+> Payment Services) TIM-protocol payment terminal support for
+> filamind_pos_iot. Community alternative to Enterprise
+> `pos_iot_six` (OEEL-1).
+
+- `pos.payment.method` extended with vendor-specific config:
+    - `iot_six_terminal_id` — the 8-character TID assigned by Six
+      when the terminal was provisioned.
+    - `iot_six_protocol` — `tim_direct` (USB/serial) or `tim_cloud`
+      (HTTPS).
+    - `iot_six_supports_tip` — when set, the cashier UI defers tip
+      prompting to the terminal.
+- `iot_request_payment` overridden so the IoT payload includes
+  Six-specific TIM fields (`terminal_id`, `protocol`,
+  `transaction_type`, `application_label`) and a longer 180s
+  timeout to accommodate Six TIM Cloud round-trips.
+- `pos.payment` extended with response capture (all readonly):
+  `iot_six_transaction_id`, `iot_six_authorization_code`,
+  `iot_six_card_brand`, `iot_six_card_last4`,
+  `iot_six_emv_aid`, `iot_six_signature_required`. The full PAN
+  is **never** stored — PCI-DSS forbids it outside of certified
+  vaults.
+- `_filamind_apply_six_response(response)` — entry point the IoT
+  controller / cron calls when the box reports the terminal's
+  response.
+
+The actual TIM protocol implementation lives on the IoT Box itself
+(its Six driver speaks TIM to the terminal); this addon is the
+server-side data + UI layer only.
+
 ### Added — Phase 11: CI matrix verifying 3 transports through 4 proxies
 
 > Roadmap Phase 11 of 16. Each commit that touches the proxy
