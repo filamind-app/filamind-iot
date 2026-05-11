@@ -1,0 +1,118 @@
+name: Proxy Matrix
+
+# Verify the three filamind-iot transports (WebSocket, long-poll,
+# short-poll) survive each common reverse proxy configuration. Runs
+# the same recipe-snippets we ship in docs/REVERSE_PROXY_PLATFORMS.md.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tests/proxy_matrix/**'
+      - '.github/workflows/proxy-matrix.yml'
+      - 'docs/REVERSE_PROXY_PLATFORMS.md'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tests/proxy_matrix/**'
+      - '.github/workflows/proxy-matrix.yml'
+      - 'docs/REVERSE_PROXY_PLATFORMS.md'
+  workflow_dispatch:
+
+jobs:
+  matrix:
+    name: ${{ matrix.proxy }} — verify 3 transports
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        proxy: [nginx, caddy, apache, traefik]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Start mock backend (8069 + 8072)
+        run: |
+          python3 tests/proxy_matrix/backend.py >/tmp/backend.log 2>&1 &
+          echo "BACKEND_PID=$!" >>"$GITHUB_ENV"
+          # wait for both ports
+          for p in 8069 8072; do
+              for i in 1 2 3 4 5 6 7 8 9 10; do
+                  if (echo > /dev/tcp/127.0.0.1/$p) 2>/dev/null; then
+                      echo "backend :$p ready"; break
+                  fi
+                  sleep 0.5
+              done
+          done
+          cat /tmp/backend.log
+
+      - name: Install + start proxy (${{ matrix.proxy }})
+        run: |
+          set -e
+          case "${{ matrix.proxy }}" in
+            nginx)
+              sudo apt-get update -qq
+              sudo apt-get install -qq -y nginx
+              sudo cp tests/proxy_matrix/nginx.conf /etc/nginx/nginx.conf
+              sudo nginx -t
+              sudo systemctl restart nginx
+              ;;
+            caddy)
+              sudo apt-get update -qq
+              sudo apt-get install -qq -y debian-keyring debian-archive-keyring apt-transport-https curl
+              curl -fsSL 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' \
+                | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+              echo 'deb [signed-by=/usr/share/keyrings/caddy-stable-archive-keyring.gpg] https://dl.cloudsmith.io/public/caddy/stable/deb/debian any-version main' \
+                | sudo tee /etc/apt/sources.list.d/caddy-stable.list >/dev/null
+              sudo apt-get update -qq
+              sudo apt-get install -qq -y caddy
+              sudo cp tests/proxy_matrix/Caddyfile /etc/caddy/Caddyfile
+              sudo systemctl restart caddy
+              ;;
+            apache)
+              sudo apt-get update -qq
+              sudo apt-get install -qq -y apache2
+              sudo systemctl stop apache2 || true
+              sudo cp tests/proxy_matrix/apache.conf /etc/apache2/apache2.conf
+              sudo apache2ctl -t
+              sudo apache2ctl start
+              ;;
+            traefik)
+              VER=v2.11.0
+              curl -fsSL "https://github.com/traefik/traefik/releases/download/${VER}/traefik_${VER}_linux_amd64.tar.gz" \
+                | sudo tar -xz -C /usr/local/bin traefik
+              sudo mkdir -p /etc/traefik
+              sudo cp tests/proxy_matrix/traefik.yml /etc/traefik/traefik.yml
+              sudo cp tests/proxy_matrix/traefik_dynamic.yml /etc/traefik/dynamic.yml
+              sudo /usr/local/bin/traefik --configFile=/etc/traefik/traefik.yml \
+                  >/tmp/traefik.log 2>&1 &
+              echo "TRAEFIK_PID=$!" >>"$GITHUB_ENV"
+              ;;
+          esac
+          # wait for proxy to bind 8080
+          for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+              if (echo > /dev/tcp/127.0.0.1/8080) 2>/dev/null; then
+                  echo "proxy :8080 ready"; break
+              fi
+              sleep 1
+          done
+
+      - name: Verify three transports
+        run: |
+          chmod +x tests/proxy_matrix/verify.sh
+          tests/proxy_matrix/verify.sh http://127.0.0.1:8080
+
+      - name: Show proxy logs on failure
+        if: failure()
+        run: |
+          echo "=== backend ==="
+          cat /tmp/backend.log || true
+          case "${{ matrix.proxy }}" in
+            nginx)   sudo journalctl -u nginx --no-pager -n 100 ;;
+            caddy)   sudo journalctl -u caddy --no-pager -n 100 ;;
+            apache)  sudo cat /var/log/apache2/error.log || true ;;
+            traefik) cat /tmp/traefik.log || true ;;
+          esac

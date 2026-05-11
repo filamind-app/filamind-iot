@@ -6,6 +6,36 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added — Phase 11: CI matrix verifying 3 transports through 4 proxies
+
+> Roadmap Phase 11 of 16. Each commit that touches the proxy
+> recipes now runs them in CI against a real nginx, Caddy, Apache,
+> and Traefik install — a regression in any of the four breaks the
+> build before users ever see it.
+
+- New workflow `.github/workflows/proxy-matrix.yml` with a 4-way
+  matrix (`nginx`, `caddy`, `apache`, `traefik`). Each job:
+  1. Starts a tiny mock backend (`tests/proxy_matrix/backend.py`)
+     on `:8069` (HTTP) and `:8072` (WebSocket).
+  2. Installs the proxy from its OS package (or downloads the
+     official binary, for Traefik).
+  3. Loads the recipe-snippet config we publish in
+     `docs/REVERSE_PROXY_PLATFORMS.md`.
+  4. Runs `tests/proxy_matrix/verify.sh http://127.0.0.1:8080`,
+     which asserts:
+     - WebSocket: `HTTP/1.1 101` + `Connection: Upgrade`.
+     - Long-poll: `HTTP/1.1 200` + JSON body within 30 s.
+     - Short-poll: `HTTP/1.1 200` + JSON body immediately.
+- The mock backend (~150 lines, stdlib-only asyncio) makes the
+  matrix self-contained — no Odoo, no Postgres, no Docker needed.
+- The workflow is path-filtered to only run when proxy bits or
+  the recipes themselves change, so it doesn't bloat addon
+  iteration time.
+
+OpenLiteSpeed is intentionally not in the matrix — it's the broken
+case the Caddy-sidecar workaround exists to dodge. Its breakage is
+documented in `docs/REVERSE_PROXY_PLATFORMS.md` instead.
+
 ### Added — Phase 10: docs per-platform reverse-proxy recipes
 
 > Roadmap Phase 10 of 16. A copy-paste reverse-proxy snippet for

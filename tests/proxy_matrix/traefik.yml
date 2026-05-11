@@ -1,0 +1,14 @@
+entryPoints:
+  web:
+    address: ':8080'
+
+providers:
+  file:
+    filename: /etc/traefik/dynamic.yml
+    watch: false
+
+api:
+  insecure: false
+log:
+  level: WARN
+accessLog: {}

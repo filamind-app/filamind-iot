@@ -1,0 +1,19 @@
+{
+    auto_https off
+    admin off
+}
+
+:8080 {
+    @ws {
+        path /websocket
+        header Connection *Upgrade*
+        header Upgrade    websocket
+    }
+    reverse_proxy @ws 127.0.0.1:8072
+
+    reverse_proxy 127.0.0.1:8069 {
+        flush_interval -1
+        header_up X-Forwarded-Proto {scheme}
+        header_up X-Real-IP         {remote}
+    }
+}

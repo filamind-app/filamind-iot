@@ -1,0 +1,22 @@
+http:
+  routers:
+    odoo-ws:
+      rule: "Path(`/websocket`)"
+      service: odoo-ws
+      entryPoints: [web]
+      priority: 100
+    odoo:
+      rule: "PathPrefix(`/`)"
+      service: odoo
+      entryPoints: [web]
+      priority: 1
+
+  services:
+    odoo-ws:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:8072"
+    odoo:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:8069"
