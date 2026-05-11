@@ -34,7 +34,7 @@ the workcenter's iot.device when set.
 """,
     'author': 'filamind',
     'website': 'https://github.com/filamind-app/filamind-iot',
-    'depends': ['filamind_iot', 'product'],
+    'depends': ['filamind_iot', 'product', 'mrp'],
     'data': [
         'security/ir.model.access.csv',
         'data/filamind_quality_data.xml',
