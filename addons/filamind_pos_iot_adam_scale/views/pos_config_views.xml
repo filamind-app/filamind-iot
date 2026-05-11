@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_pos_config_form_adam_scale" model="ir.ui.view">
+        <field name="name">pos.config.form.adam_scale</field>
+        <field name="model">pos.config</field>
+        <field name="inherit_id" ref="point_of_sale.pos_config_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="Adam Scale (filamind)"
+                       name="filamind_adam_scale_pos_group"
+                       invisible="not iot_scale_id">
+                    <field name="iot_adam_check_capacity"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

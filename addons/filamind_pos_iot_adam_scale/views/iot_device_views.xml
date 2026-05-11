@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_iot_device_form_adam_scale" model="ir.ui.view">
+        <field name="name">iot.device.form.adam_scale</field>
+        <field name="model">iot.device</field>
+        <field name="inherit_id"
+               ref="filamind_iot.view_iot_device_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="Adam Equipment Scale (filamind)"
+                       name="filamind_adam_scale_group"
+                       invisible="type_code != 'scale'">
+                    <field name="adam_model_family"/>
+                    <field name="adam_serial_baud"/>
+                    <field name="adam_unit_default"/>
+                    <field name="adam_capacity_kg"/>
+                    <field name="adam_supports_tare"/>
+                    <button name="action_iot_adam_zero"
+                            string="Zero"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="not adam_model_family"/>
+                    <button name="action_iot_adam_tare"
+                            string="Tare"
+                            type="object"
+                            class="btn-secondary"
+                            invisible="not adam_model_family or not adam_supports_tare"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

@@ -6,6 +6,33 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added — Phase 14: filamind_pos_iot_adam_scale new addon (v0.1.0)
+
+> Roadmap Phase 14 of 16. Adam Equipment scale (CPWplus, GFK, GBK,
+> GFC, GBC series) support for filamind_pos_iot. Adam scales speak
+> the AGN ASCII serial protocol at 9600/8/N/1 by default.
+> Community alternative to Enterprise `pos_iot_adam_scale` (OEEL-1).
+
+- `iot.device` extended (only meaningful when `type=scale`):
+    - `adam_model_family` — `cpwplus` | `gfk_gbk` | `gfc_gbc`
+      (picks the AGN command subset).
+    - `adam_serial_baud` — 4800 / 9600 (default) / 19200 / 38400.
+    - `adam_unit_default` — `g` / `kg` / `lb` / `oz`.
+    - `adam_capacity_kg` — declared scale capacity, used by the
+      POS to flag overload-shaped weights.
+    - `adam_supports_tare` — gates the Tare button in the UI.
+- `iot.device.action_iot_adam_zero()` — issue AGN `Z` (zero).
+- `iot.device.action_iot_adam_tare()` — issue AGN `T` (tare) when
+  `adam_supports_tare` is set.
+- `pos.config.iot_adam_check_capacity` — when set, POS warns the
+  cashier on weights > scale capacity.
+- View extends both `filamind_iot.view_iot_device_form` (per-device
+  Adam group + Zero/Tare buttons) and `pos.config` (capacity-check
+  toggle, only visible when an `iot_scale_id` is configured).
+
+The actual AGN serial command implementation lives on the IoT Box
+itself; this addon is the server-side data + UI layer only.
+
 ### Added — Phase 13: filamind_pos_iot_worldline new addon (v0.1.0)
 
 > Roadmap Phase 13 of 16. Worldline (CTEP / Sips-Sherlocks)
