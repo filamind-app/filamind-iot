@@ -3,7 +3,7 @@
 
     <menuitem id="menu_kitchen_display_root"
               name="Kitchen Displays"
-              parent="point_of_sale.pos_menu_root"
+              parent="point_of_sale.menu_point_root"
               sequence="50"/>
 
     <menuitem id="menu_kitchen_display_list"
