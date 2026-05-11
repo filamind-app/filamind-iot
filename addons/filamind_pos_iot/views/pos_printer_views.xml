@@ -4,7 +4,7 @@
     <record id="view_pos_printer_form_iot" model="ir.ui.view">
         <field name="name">pos.printer.form.iot</field>
         <field name="model">pos.printer</field>
-        <field name="inherit_id" ref="pos_restaurant.pos_printer_form"/>
+        <field name="inherit_id" ref="point_of_sale.view_pos_printer_form"/>
         <field name="arch" type="xml">
             <xpath expr="//sheet" position="inside">
                 <group string="IoT (filamind)" name="filamind_iot_group">

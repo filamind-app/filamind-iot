@@ -30,12 +30,10 @@
                 <field name="pos_order_id"/>
                 <filter name="illegal" string="Below Min e (illegal)"
                         domain="[('legal', '=', False)]"/>
-                <group expand="0" string="Group By">
-                    <filter name="group_device" string="Scale"
-                            context="{'group_by': 'device_id'}"/>
-                    <filter name="group_cashier" string="Cashier"
-                            context="{'group_by': 'cashier_id'}"/>
-                </group>
+                <filter name="group_device" string="Scale"
+                        context="{'group_by': 'device_id'}"/>
+                <filter name="group_cashier" string="Cashier"
+                        context="{'group_by': 'cashier_id'}"/>
             </search>
         </field>
     </record>
