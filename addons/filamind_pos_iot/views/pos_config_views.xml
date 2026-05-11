@@ -9,7 +9,9 @@
             <xpath expr="//sheet" position="inside">
                 <group string="IoT Devices (filamind)" name="filamind_iot_group">
                     <group>
+                        <field name="use_iot_box"/>
                         <field name="iot_box_id"
+                               readonly="not use_iot_box"
                                options="{'no_create': True, 'no_quick_create': True}"/>
                         <field name="iot_printer_id"
                                readonly="not iot_box_id"
@@ -17,9 +19,11 @@
                         <field name="iot_scale_id"
                                readonly="not iot_box_id"
                                options="{'no_create': True}"/>
-                        <field name="iot_scanner_id"
+                        <field name="iot_scanner_ids"
                                readonly="not iot_box_id"
+                               widget="many2many_tags"
                                options="{'no_create': True}"/>
+                        <field name="iot_scanner_id" invisible="1"/>
                     </group>
                     <group>
                         <field name="iot_customer_display_id"

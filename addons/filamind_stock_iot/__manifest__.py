@@ -1,6 +1,6 @@
 {
     'name': 'Filamind Stock IoT',
-    'version': '19.0.1.0.0',
+    'version': '19.0.2.0.0',
     'category': 'Inventory',
     'summary': 'Warehouse-side IoT hooks: barcode scanners, label printers, '
                'and scales attached to filamind IoT Boxes.',
@@ -13,6 +13,9 @@ Filamind Stock IoT
   template to the IoT label printer (cab Squix, Zebra, Brother, …).
 * ``stock.picking.action_iot_weigh_package`` — capture a weight reading
   from the warehouse scale into ``stock.move.line`` ``shipping_weight``.
+* ``stock.picking.type.iot_scale_ids`` (NEW v0.2.0) — m2m of scales
+  available for a given operation type (mirrors Enterprise
+  delivery_iot).
 * Generic helpers any other inventory flow can call.
 """,
     'author': 'filamind',
@@ -21,6 +24,7 @@ Filamind Stock IoT
     'data': [
         'views/stock_warehouse_views.xml',
         'views/stock_picking_views.xml',
+        'views/stock_picking_type_views.xml',
     ],
     'installable': True,
     'auto_install': False,

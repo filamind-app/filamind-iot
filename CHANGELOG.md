@@ -6,6 +6,40 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added — Phase 4: Missing field extensions on existing addons
+
+> Roadmap Phase 4 of 16. Brings the three existing business addons in
+> line with what upstream `pos_iot`, `mrp_iot`, `delivery_iot` ship.
+
+**filamind_pos_iot v0.2.0**
+- `pos.config.iot_scanner_ids` (m2m) — multiple scanners per POS.
+  `pos.config.iot_scanner_id` (m2o) kept as a deprecated alias until
+  v1.0.
+- `pos.config.use_iot_box` (boolean) toggle.
+- New file `models/pos_printer.py`: `pos.printer.iot_device_id` (m2o)
+  + `pos.printer.iot_use_lna` (boolean) — kitchen / bar tickets
+  dispatch through the IoT Box.
+- `views/pos_printer_views.xml` to expose the new fields on the printer
+  form.
+- `pos_restaurant` added to module depends.
+
+**filamind_mrp_iot v0.2.0**
+- New model `iot.trigger` (mirrors Enterprise `mrp_iot.iot.trigger`):
+  `device_id`, `workcenter_id`, `key`, `sequence`, plus an `action`
+  selection with **all 19 Enterprise codes** for cross-import
+  compatibility (`VALI`, `PAUS`, `NEXT`, `PREV`, `SKIP`, `CLMO`,
+  `CLWO`, `FINI`, `RECO`, `CANC`, `PACK`, `SCRA`, `PROP`, `PRSL`,
+  `PRNT`, `picture`, `measure`, `pass`, `fail`).
+- `mrp.workcenter.trigger_ids` (o2m → iot.trigger).
+- `security/ir.model.access.csv` + `views/iot_trigger_views.xml`.
+
+**filamind_stock_iot v0.2.0**
+- New file `models/stock_picking_type.py`:
+  `stock.picking.type.iot_scale_ids` (m2m → iot.device) — mirrors
+  Enterprise `delivery_iot`.
+- `views/stock_picking_type_views.xml` to surface the field on the
+  operation-type form.
+
 ### Added — Phase 2: Multi-transport server endpoints (filamind_iot v19.0.4.0.0)
 
 > Roadmap Phase 2 of 16. Server side of the WebSocket → LongPoll →

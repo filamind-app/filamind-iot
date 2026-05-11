@@ -25,6 +25,11 @@ class MrpWorkcenter(models.Model):
         ondelete='set null',
         help='Used by quality checks to capture dimensional measurements.',
     )
+    trigger_ids = fields.One2many(
+        'iot.trigger', 'workcenter_id', string='IoT Triggers',
+        help='Map physical key/scan/measure events from IoT devices to '
+             'work-order actions (Validate, Pause, Take Measure, …).',
+    )
     iot_scanner_id = fields.Many2one(
         'iot.device', string='Barcode Scanner',
         domain="[('iot_box_id', '=', iot_box_id),"

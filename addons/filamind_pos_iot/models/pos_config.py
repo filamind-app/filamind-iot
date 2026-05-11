@@ -23,12 +23,31 @@ class PosConfig(models.Model):
                " ('type_id.code', '=', 'scale'), ('active', '=', True)]",
         ondelete='set null',
     )
+    # NOTE: iot_scanner_id (m2o) is kept for backward compatibility but
+    # deprecated. Prefer iot_scanner_ids (m2m) which matches Enterprise
+    # pos_iot. Will be removed in v1.0.
     iot_scanner_id = fields.Many2one(
-        'iot.device', string='Barcode Scanner',
+        'iot.device', string='Barcode Scanner (deprecated)',
         domain="[('iot_box_id', '=', iot_box_id),"
                " ('type_id.code', '=', 'barcode_scanner'),"
                " ('active', '=', True)]",
         ondelete='set null',
+        help='DEPRECATED — use iot_scanner_ids instead. '
+             'Will be removed in filamind_pos_iot v1.0.',
+    )
+    iot_scanner_ids = fields.Many2many(
+        'iot.device', 'pos_config_iot_scanner_rel',
+        'config_id', 'device_id',
+        string='Barcode Scanners',
+        domain="[('type_id.code', '=', 'barcode_scanner'),"
+               " ('active', '=', True)]",
+        help='Multiple scanners can be active at once on a single POS.',
+    )
+    use_iot_box = fields.Boolean(
+        string='Use IoT Box',
+        help='Enable IoT integration on this POS configuration. When False, '
+             'the iot_*_id fields are still saved but POS frontend ignores '
+             'them.',
     )
     iot_customer_display_id = fields.Many2one(
         'iot.device', string='Customer Display',

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_iot_trigger_list" model="ir.ui.view">
+        <field name="name">iot.trigger.list</field>
+        <field name="model">iot.trigger</field>
+        <field name="arch" type="xml">
+            <list string="IoT Triggers" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="device_id"
+                       options="{'no_create': True}"/>
+                <field name="key"/>
+                <field name="action"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Inline list of triggers on the workcenter form -->
+    <record id="view_workcenter_form_iot_triggers" model="ir.ui.view">
+        <field name="name">mrp.workcenter.form.iot.triggers</field>
+        <field name="model">mrp.workcenter</field>
+        <field name="inherit_id"
+               ref="filamind_mrp_iot.view_workcenter_form_iot"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='filamind_iot_group']" position="after">
+                <group string="IoT Triggers (filamind)"
+                       name="filamind_iot_triggers"
+                       invisible="not iot_box_id">
+                    <field name="trigger_ids" nolabel="1"
+                           context="{'default_workcenter_id': active_id}">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="device_id"
+                                   options="{'no_create': True}"
+                                   domain="[('iot_box_id', '=', parent.iot_box_id),
+                                            ('type_id.code', 'in',
+                                             ('barcode_scanner', 'keyboard',
+                                              'measuring_tool', 'gpio')),
+                                            ('active', '=', True)]"/>
+                            <field name="key"/>
+                            <field name="action"/>
+                        </list>
+                    </field>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
