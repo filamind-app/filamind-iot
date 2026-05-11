@@ -55,6 +55,12 @@ class IotCommandQueue(models.Model):
     error = fields.Char(string='Error')
     sent_at = fields.Datetime(string='Sent At', readonly=True)
     completed_at = fields.Datetime(string='Completed At', readonly=True)
+    delivered_at = fields.Datetime(
+        string='Delivered At', readonly=True,
+        help='Set when a poll endpoint hands this command to the box. '
+             'Stays NULL for boxes still receiving commands via WebSocket '
+             '(they consume the bus.bus message directly).',
+    )
     timeout_seconds = fields.Integer(
         string='Timeout (s)', default=15,
         help='Reap as timeout if no response after this many seconds.',

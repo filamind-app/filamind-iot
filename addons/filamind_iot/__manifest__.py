@@ -1,6 +1,6 @@
 {
     'name': 'Filamind IoT',
-    'version': '19.0.3.0.0',
+    'version': '19.0.4.0.0',
     'category': 'Productivity/IoT',
     'summary': 'Self-hosted IoT gateway for Odoo — pairs with the filamind-iotbox image',
     'description': """

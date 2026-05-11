@@ -6,6 +6,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added — Phase 2: Multi-transport server endpoints (filamind_iot v19.0.4.0.0)
+
+> Roadmap Phase 2 of 16. Server side of the WebSocket → LongPoll →
+> ShortPoll graceful-degradation chain. The matching box-side patch
+> (transport.py) ships in filamind-iotbox v0.2.0.
+
+- New endpoints (each with `/iot/box/...` alias for symmetry):
+  * `POST /filamind_iot/poll` — long-poll. Blocks up to 30 s waiting
+    for new `iot.command.queue` rows in state `sent` with id greater
+    than the box's `last_seq`. Returns up to 50 commands at once.
+  * `POST /filamind_iot/poll_short` — short-poll. Same behaviour but
+    returns immediately. For environments where long-polling is
+    actively blocked (some hardened LBs).
+- `iot.command.queue.delivered_at` (datetime) — set when a poll
+  endpoint hands a command to the box, so the next poll cycle won't
+  re-deliver. Stays NULL for boxes still on WebSocket transport.
+- Both endpoints reuse the existing token-based `_authenticate_box`
+  and require the same JSON envelope as our other authenticated routes.
+
 ### Added — Phase 1: Upstream protocol parity (filamind_iot v19.0.3.0.0)
 
 > Roadmap Phase 1 of 16. After this release, an unmodified upstream

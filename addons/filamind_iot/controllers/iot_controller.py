@@ -555,6 +555,98 @@ class IotController(http.Controller):
         except Exception:
             return _internal_error('IoT get_handlers failed')
 
+    # ── Multi-transport polling (Phase 2) ────────────────────────────────
+    @http.route(['/filamind_iot/poll', '/iot/box/poll'],
+                type='http', auth='public', methods=['POST'], csrf=False)
+    def poll_long(self, **post):
+        """Long-poll: block up to `wait_seconds` (capped at 30 s) waiting
+        for new iot.command.queue entries addressed to this box.
+
+        Body:
+          {identifier, token, last_seq, wait_seconds=20}
+
+        Response:
+          {
+            "commands": [{id, method, payload}, ...],
+            "next_seq": <highest id returned, or last_seq if none>,
+            "server_time": <iso>,
+          }
+
+        The box is expected to call /filamind_iot/command_result for each
+        command after acting on it.
+        """
+        try:
+            payload = request.httprequest.get_json(silent=True) or post
+            box = self._authenticate_box(payload)
+            if not box:
+                return _json_response({'error': 'Unauthorized'}, status=401)
+
+            last_seq = int(payload.get('last_seq') or 0)
+            wait = max(0, min(30, int(payload.get('wait_seconds') or 20)))
+            return self._poll_block(box, last_seq, wait)
+        except Exception:
+            return _internal_error('IoT poll failed')
+
+    @http.route(['/filamind_iot/poll_short', '/iot/box/poll_short'],
+                type='http', auth='public', methods=['POST'], csrf=False)
+    def poll_short(self, **post):
+        """Short-poll: same as /poll but returns immediately (no blocking)."""
+        try:
+            payload = request.httprequest.get_json(silent=True) or post
+            box = self._authenticate_box(payload)
+            if not box:
+                return _json_response({'error': 'Unauthorized'}, status=401)
+            last_seq = int(payload.get('last_seq') or 0)
+            return self._poll_block(box, last_seq, wait_seconds=0)
+        except Exception:
+            return _internal_error('IoT poll_short failed')
+
+    def _poll_block(self, box, last_seq, wait_seconds):
+        """Shared implementation for long-poll and short-poll.
+
+        Polls iot.command.queue every 1s up to wait_seconds, returning
+        all `sent` rows newer than last_seq. Marks them as delivered to
+        prevent re-delivery on the next poll cycle.
+        """
+        import time as _time
+        from odoo import fields as _fields
+
+        Queue = request.env['iot.command.queue'].sudo()
+        deadline = _time.monotonic() + max(0, wait_seconds)
+        domain = [
+            ('iot_box_id', '=', box.id),
+            ('state', '=', 'sent'),
+            ('id', '>', last_seq),
+            ('delivered_at', '=', False),
+        ]
+        while True:
+            request.env.cr.commit()  # see writes from other workers
+            commands = Queue.search(domain, order='id asc', limit=50)
+            if commands or _time.monotonic() >= deadline:
+                break
+            _time.sleep(1)
+
+        out = []
+        if commands:
+            now = _fields.Datetime.now()
+            commands.write({'delivered_at': now})
+            request.env.cr.commit()
+            for c in commands:
+                out.append({
+                    'id': c.id,
+                    'session_id': c.name,
+                    'method': c.method,
+                    'payload': json.loads(c.request_payload or '{}')
+                                if c.request_payload else {},
+                    'timeout_seconds': c.timeout_seconds,
+                })
+        next_seq = max([c['id'] for c in out], default=last_seq)
+        return _json_response({
+            'commands': out,
+            'next_seq': next_seq,
+            'server_time': fields.Datetime.now().isoformat(),
+        })
+
 
 def _box_default_name(identifier):
     short = identifier[:8] if identifier else 'unknown'
