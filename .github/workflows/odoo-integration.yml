@@ -119,25 +119,55 @@ jobs:
         run: |
           PGPASSWORD=odoo createdb -h 127.0.0.1 -U odoo filamind_test
 
-      - name: Install + test filamind_iot_full (umbrella → all 14 addons)
+      - name: Install filamind_iot_full (umbrella → all 14 addons)
         run: |
           set -o pipefail
+          # No --test-enable here — Odoo's own test suite for `base`
+          # and `web` requires wkhtmltopdf and other system deps that
+          # aren't worth installing in CI just to skip them again. The
+          # install path itself catches the bugs we care about
+          # (missing XID refs, cross-addon field comodel resolution,
+          # security ACL syntax, cron parse errors, _inherit chain
+          # breakage). For per-addon Python unit tests, see the
+          # next step which runs --test-tags scoped to filamind only.
           odoo -c odoo.conf \
               -d filamind_test \
               -i filamind_iot_full \
-              --test-enable \
               --stop-after-init \
               --log-handler odoo.modules.loading:INFO \
-              --log-handler odoo.tests:INFO \
               2>&1 | tee odoo.log
 
-          # Odoo doesn't return non-zero on test failures by default —
-          # grep the log for ERROR/FAIL/Traceback markers.
-          if grep -E '^[[:space:]]*(ERROR|CRITICAL|FAIL|Traceback)' odoo.log; then
-              echo "::error::Odoo install/test reported errors above"
+          # Odoo's exit code is 0 even on partial install. We explicitly
+          # check for CRITICAL (registry load failure) or filamind-scope
+          # ERRORs.
+          if grep -E '^[[:space:]]*CRITICAL' odoo.log; then
+              echo "::error::Odoo registry load failed — see CRITICAL above"
+              exit 1
+          fi
+          if grep -E '^[[:space:]]*ERROR.*filamind' odoo.log; then
+              echo "::error::filamind-scope ERROR detected"
               exit 1
           fi
           echo "::notice::All 14 filamind addons installed cleanly on Odoo 19.0"
+
+      - name: Run filamind-only unit tests
+        run: |
+          set -o pipefail
+          # --test-tags=/<module> runs only that module's tests.
+          # We chain every filamind addon so Odoo's own slow / system-
+          # dep-heavy test modules are skipped.
+          odoo -c odoo.conf \
+              -d filamind_test \
+              --test-enable \
+              --test-tags=/filamind_iot,/filamind_pos_iot,/filamind_stock_iot,/filamind_mrp_iot,/filamind_kitchen_display,/filamind_quality_iot,/filamind_self_order_iot,/filamind_event_iot,/filamind_l10n_eg_iot,/filamind_pos_iot_six,/filamind_pos_iot_worldline,/filamind_pos_iot_adam_scale,/filamind_l10n_eu_iot_scale_cert,/filamind_iot_full \
+              --stop-after-init \
+              2>&1 | tee odoo-tests.log
+
+          if grep -E '^[[:space:]]*(ERROR|FAIL).*filamind' odoo-tests.log; then
+              echo "::error::filamind-scope test failure detected"
+              exit 1
+          fi
+          echo "::notice::All filamind addons' unit tests passed"
 
       - name: Confirm every addon is loaded
         run: |
@@ -157,5 +187,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: odoo-install-log
-          path: odoo.log
+          path: |
+            odoo.log
+            odoo-tests.log
           if-no-files-found: ignore
