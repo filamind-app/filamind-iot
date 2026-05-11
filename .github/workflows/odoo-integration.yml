@@ -1,0 +1,161 @@
+name: Odoo Integration
+
+# End-to-end install test: spin up Postgres, clone Odoo 19.0, install
+# every filamind addon, and run --test-enable. Catches the things our
+# syntax/manifest checks can't:
+#   * missing XID references
+#   * field type mismatches caught only at ORM load
+#   * cron schedule parse errors
+#   * security ACL syntax errors
+#   * inherit() chains that break across addons
+#
+# Slow (~10–15 min); runs only on push to main, on PR labelled
+# `odoo-integration`, or manually.
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - '.github/workflows/proxy-matrix.yml'
+      - 'tests/proxy_matrix/**'
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled]
+  workflow_dispatch:
+
+jobs:
+  odoo-19:
+    name: Odoo 19.0 — install all 14 addons + --test-enable
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'odoo-integration')
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: odoo
+          POSTGRES_PASSWORD: odoo
+          POSTGRES_DB: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U odoo"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    steps:
+      - name: Checkout filamind-iot
+        uses: actions/checkout@v4
+        with:
+          path: filamind-iot
+
+      - name: Cache Odoo 19.0 source
+        id: cache-odoo
+        uses: actions/cache@v4
+        with:
+          path: odoo
+          key: odoo-19.0-${{ runner.os }}-${{ hashFiles('filamind-iot/.github/workflows/odoo-integration.yml') }}
+
+      - name: Shallow-clone Odoo 19.0
+        if: steps.cache-odoo.outputs.cache-hit != 'true'
+        run: |
+          git clone --depth 1 --branch 19.0 \
+            https://github.com/odoo/odoo.git odoo
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: System deps
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -qq -y \
+            build-essential libldap2-dev libsasl2-dev libssl-dev \
+            libxslt1-dev libxml2-dev libjpeg-dev libpq-dev \
+            libfreetype6-dev liblcms2-dev libwebp-dev libtiff-dev \
+            libopenjp2-7-dev zlib1g-dev libcairo2 libpango-1.0-0 \
+            libpangocairo-1.0-0 libgdk-pixbuf2.0-0 libffi-dev \
+            shared-mime-info node-less postgresql-client
+
+      - name: Pip cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-odoo19-${{ runner.os }}-${{ hashFiles('odoo/requirements.txt') }}
+
+      - name: Python deps
+        run: |
+          python -m pip install --upgrade pip wheel setuptools
+          # Odoo 19.0 requirements.txt
+          pip install -r odoo/requirements.txt
+
+      - name: Install Odoo in develop mode
+        run: pip install -e odoo
+
+      - name: Render odoo.conf
+        run: |
+          cat >odoo.conf <<EOF
+          [options]
+          addons_path = ${PWD}/odoo/addons,${PWD}/filamind-iot/addons
+          db_host = 127.0.0.1
+          db_port = 5432
+          db_user = odoo
+          db_password = odoo
+          db_name = filamind_test
+          admin_passwd = admin
+          without_demo = all
+          workers = 0
+          max_cron_threads = 0
+          log_level = warn
+          server_wide_modules = base,web
+          EOF
+          cat odoo.conf
+
+      - name: Create test DB
+        run: |
+          PGPASSWORD=odoo createdb -h 127.0.0.1 -U odoo filamind_test
+
+      - name: Install + test filamind_iot_full (umbrella → all 14 addons)
+        run: |
+          set -o pipefail
+          odoo -c odoo.conf \
+              -d filamind_test \
+              -i filamind_iot_full \
+              --test-enable \
+              --stop-after-init \
+              --log-handler odoo.modules.loading:INFO \
+              --log-handler odoo.tests:INFO \
+              2>&1 | tee odoo.log
+
+          # Odoo doesn't return non-zero on test failures by default —
+          # grep the log for ERROR/FAIL/Traceback markers.
+          if grep -E '^[[:space:]]*(ERROR|CRITICAL|FAIL|Traceback)' odoo.log; then
+              echo "::error::Odoo install/test reported errors above"
+              exit 1
+          fi
+          echo "::notice::All 14 filamind addons installed cleanly on Odoo 19.0"
+
+      - name: Confirm every addon is loaded
+        run: |
+          PGPASSWORD=odoo psql -h 127.0.0.1 -U odoo -d filamind_test -At -c \
+              "SELECT name, state FROM ir_module_module
+               WHERE name LIKE 'filamind%' ORDER BY name;"
+          missing=$(PGPASSWORD=odoo psql -h 127.0.0.1 -U odoo -d filamind_test -At -c \
+              "SELECT name FROM ir_module_module
+               WHERE name LIKE 'filamind%' AND state != 'installed';")
+          if [ -n "$missing" ]; then
+              echo "::error::Modules not installed: $missing"
+              exit 1
+          fi
+
+      - name: Upload odoo.log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: odoo-install-log
+          path: odoo.log
+          if-no-files-found: ignore

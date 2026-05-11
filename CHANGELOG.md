@@ -6,6 +6,38 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added — Phase 17: Real Odoo 19.0 install + --test-enable in CI
+
+> Beyond syntax — every push to main now actually installs all 14
+> addons against a real Odoo 19.0 + Postgres 16, runs the whole
+> --test-enable suite, and asserts every filamind module ends up
+> in the `installed` state.
+
+- New workflow `.github/workflows/odoo-integration.yml`:
+  - Spins up Postgres 16 as a service container.
+  - Shallow-clones `odoo/odoo` branch `19.0` (cached across runs).
+  - Installs Odoo's full `requirements.txt`.
+  - Renders an `odoo.conf` with `addons_path` pointing at both
+    Odoo's own `addons/` and our `filamind-iot/addons/`.
+  - Runs
+    `odoo -d filamind_test -i filamind_iot_full --test-enable
+    --stop-after-init` (the umbrella addon pulls every dependency
+    in transitively).
+  - Greps the log for ERROR/CRITICAL/FAIL/Traceback markers since
+    Odoo doesn't return non-zero on test failures by default.
+  - Verifies via SQL that every `filamind%` row in
+    `ir_module_module` has `state = 'installed'`.
+  - Uploads `odoo.log` as a CI artifact on failure for debugging.
+- Path-filtered: skips when only docs or proxy-matrix files
+  change, since those don't touch addon code.
+- PR-gated: only runs on PRs labelled `odoo-integration` to keep
+  contributor friction low; runs unconditionally on `main`.
+
+This catches what `ruff` / `py_compile` / `xml.etree` cannot:
+missing XID references, field type mismatches at ORM load, cron
+schedule parse errors, security ACL syntax errors, and
+`_inherit` chains broken across addons.
+
 ### Added — Phase 16: filamind_iot_full umbrella + README sweep (v0.1.0)
 
 > Roadmap Phase 16 of 16 — closing milestone. Full Enterprise-parity
