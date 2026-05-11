@@ -103,6 +103,11 @@ class IotBox(models.Model):
     )
     is_online = fields.Boolean(
         string='Online', compute='_compute_is_online', store=False)
+    active = fields.Boolean(
+        default=True,
+        help='Soft-archive flag. Inactive boxes are hidden from default '
+             'searches but kept for audit history.',
+    )
 
     # ── Network / security ───────────────────────────────────────────────
     wifi_ssid = fields.Char(string='Wi-Fi SSID')
