@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="seq_quality_point" model="ir.sequence">
+        <field name="name">Filamind Quality Point Sequence</field>
+        <field name="code">filamind.quality.point</field>
+        <field name="prefix">QP/</field>
+        <field name="padding">4</field>
+        <field name="number_next">1</field>
+    </record>
+
+    <record id="seq_quality_check" model="ir.sequence">
+        <field name="name">Filamind Quality Check Sequence</field>
+        <field name="code">filamind.quality.check</field>
+        <field name="prefix">QC/</field>
+        <field name="padding">5</field>
+        <field name="number_next">1</field>
+    </record>
+
+    <!-- Cron: copy IoT measurement results into the matching check -->
+    <record id="cron_apply_iot_results" model="ir.cron">
+        <field name="name">Quality: apply IoT measurement results</field>
+        <field name="model_id" ref="model_filamind_quality_check"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_apply_iot_results()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">minutes</field>
+        <field name="active" eval="True"/>
+    </record>
+
+</odoo>

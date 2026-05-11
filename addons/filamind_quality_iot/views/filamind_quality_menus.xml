@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem id="menu_quality_root"
+              name="Quality"
+              web_icon="filamind_quality_iot,static/description/icon.png"
+              sequence="92"/>
+
+    <menuitem id="menu_quality_points"
+              parent="menu_quality_root"
+              action="action_quality_point"
+              sequence="10"/>
+
+    <menuitem id="menu_quality_checks"
+              parent="menu_quality_root"
+              action="action_quality_check"
+              sequence="20"/>
+
+    <menuitem id="menu_quality_alerts"
+              parent="menu_quality_root"
+              action="action_quality_alert"
+              sequence="30"/>
+
+</odoo>

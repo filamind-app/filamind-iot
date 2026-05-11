@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_quality_point_list" model="ir.ui.view">
+        <field name="name">filamind.quality.point.list</field>
+        <field name="model">filamind.quality.point</field>
+        <field name="arch" type="xml">
+            <list string="Quality Points">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="product_id" optional="show"/>
+                <field name="workcenter_id" optional="hide"/>
+                <field name="test_type"/>
+                <field name="iot_device_id" optional="show"/>
+                <field name="check_count"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_quality_point_form" model="ir.ui.view">
+        <field name="name">filamind.quality.point.form</field>
+        <field name="model">filamind.quality.point</field>
+        <field name="arch" type="xml">
+            <form string="Quality Point">
+                <header>
+                    <button name="action_create_check" type="object"
+                            string="Take Check" class="btn-primary"
+                            icon="fa-check"/>
+                    <button name="action_view_checks" type="object"
+                            string="History" class="btn-secondary"
+                            icon="fa-history"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="e.g. Bolt thread depth"/></h1>
+                    </div>
+                    <group>
+                        <group string="Scope">
+                            <field name="product_id"
+                                   options="{'no_create': True}"/>
+                            <field name="product_template_id"
+                                   options="{'no_create': True}"/>
+                            <field name="workcenter_id"
+                                   options="{'no_create': True}"/>
+                            <field name="measure_on"/>
+                            <field name="active"/>
+                        </group>
+                        <group string="Test">
+                            <field name="test_type"/>
+                            <field name="norm_unit"
+                                   invisible="test_type != 'measure'"/>
+                            <field name="target_value"
+                                   invisible="test_type != 'measure'"/>
+                            <field name="tolerance_min"
+                                   invisible="test_type != 'measure'"/>
+                            <field name="tolerance_max"
+                                   invisible="test_type != 'measure'"/>
+                        </group>
+                    </group>
+                    <group string="IoT (filamind)">
+                        <field name="iot_device_id"
+                               options="{'no_create': True}"/>
+                    </group>
+                    <field name="note" placeholder="Inspection instructions / acceptance criteria"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_quality_point_search" model="ir.ui.view">
+        <field name="name">filamind.quality.point.search</field>
+        <field name="model">filamind.quality.point</field>
+        <field name="arch" type="xml">
+            <search string="Quality Points">
+                <field name="name"/>
+                <field name="product_id"/>
+                <field name="workcenter_id"/>
+                <field name="iot_device_id"/>
+                <filter string="With IoT Device" name="iot_only"
+                        domain="[('iot_device_id', '!=', False)]"/>
+                <filter string="Active" name="active"
+                        domain="[('active', '=', True)]"/>
+                <filter string="Group by Test Type" name="group_test_type"
+                        context="{'group_by': 'test_type'}"/>
+                <filter string="Group by Product" name="group_product"
+                        context="{'group_by': 'product_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_quality_point" model="ir.actions.act_window">
+        <field name="name">Quality Points</field>
+        <field name="res_model">filamind.quality.point</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_quality_point_search"/>
+        <field name="context">{'search_default_active': 1}</field>
+    </record>
+
+</odoo>

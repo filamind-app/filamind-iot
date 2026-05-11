@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_quality_alert_list" model="ir.ui.view">
+        <field name="name">filamind.quality.alert.list</field>
+        <field name="model">filamind.quality.alert</field>
+        <field name="arch" type="xml">
+            <list string="Quality Alerts"
+                  decoration-danger="severity == 'critical'"
+                  decoration-warning="severity == 'high'"
+                  decoration-muted="state in ('resolved', 'cancelled')">
+                <field name="create_date"/>
+                <field name="name"/>
+                <field name="product_id" optional="show"/>
+                <field name="severity" widget="badge"
+                       decoration-danger="severity == 'critical'"
+                       decoration-warning="severity == 'high'"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'resolved'"
+                       decoration-info="state == 'in_progress'"
+                       decoration-muted="state == 'cancelled'"/>
+                <field name="user_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_quality_alert_form" model="ir.ui.view">
+        <field name="name">filamind.quality.alert.form</field>
+        <field name="model">filamind.quality.alert</field>
+        <field name="arch" type="xml">
+            <form string="Quality Alert">
+                <header>
+                    <button name="action_start" type="object"
+                            string="Start" class="btn-primary"
+                            invisible="state != 'open'"/>
+                    <button name="action_resolve" type="object"
+                            string="Resolve" class="btn-success"
+                            invisible="state in ('resolved', 'cancelled')"/>
+                    <button name="action_reopen" type="object"
+                            string="Reopen" class="btn-secondary"
+                            invisible="state not in ('resolved', 'cancelled')"/>
+                    <button name="action_cancel" type="object"
+                            string="Cancel" class="btn-secondary"
+                            invisible="state in ('resolved', 'cancelled')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="open,in_progress,resolved"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="Issue title"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="severity"/>
+                            <field name="product_id"
+                                   options="{'no_create': True}"/>
+                            <field name="user_id"/>
+                            <field name="check_id"
+                                   options="{'no_create': True}"/>
+                        </group>
+                        <group>
+                            <field name="date_resolved" readonly="1"/>
+                            <field name="company_id"
+                                   groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Description" name="description">
+                            <field name="description"/>
+                        </page>
+                        <page string="Corrective Action" name="corrective">
+                            <field name="action_corrective"/>
+                        </page>
+                        <page string="Preventive Action" name="preventive">
+                            <field name="action_preventive"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_quality_alert" model="ir.actions.act_window">
+        <field name="name">Quality Alerts</field>
+        <field name="res_model">filamind.quality.alert</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

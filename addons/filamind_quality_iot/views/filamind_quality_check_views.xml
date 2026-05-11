@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_quality_check_list" model="ir.ui.view">
+        <field name="name">filamind.quality.check.list</field>
+        <field name="model">filamind.quality.check</field>
+        <field name="arch" type="xml">
+            <list string="Quality Checks"
+                  decoration-success="state == 'pass'"
+                  decoration-danger="state == 'fail'"
+                  decoration-info="state == 'open'">
+                <field name="name"/>
+                <field name="create_date"/>
+                <field name="point_id"/>
+                <field name="product_id"/>
+                <field name="user_id"/>
+                <field name="measure_value" optional="show"/>
+                <field name="measure_unit" optional="show"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'pass'"
+                       decoration-danger="state == 'fail'"
+                       decoration-info="state == 'open'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_quality_check_form" model="ir.ui.view">
+        <field name="name">filamind.quality.check.form</field>
+        <field name="model">filamind.quality.check</field>
+        <field name="arch" type="xml">
+            <form string="Quality Check">
+                <header>
+                    <button name="action_pass" type="object"
+                            string="Pass" class="btn-success"
+                            invisible="state == 'pass'"/>
+                    <button name="action_fail" type="object"
+                            string="Fail" class="btn-danger"
+                            invisible="state == 'fail'"/>
+                    <button name="_iot_request_measurement" type="object"
+                            string="Re-read from IoT"
+                            class="btn-secondary" icon="fa-bolt"
+                            invisible="not point_id"/>
+                    <button name="action_create_alert" type="object"
+                            string="Open Alert"
+                            class="btn-secondary" icon="fa-exclamation-triangle"
+                            invisible="state != 'fail'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="open,pass,fail"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="point_id"
+                                   options="{'no_create': True}"/>
+                            <field name="product_id"
+                                   options="{'no_create': True}"/>
+                            <field name="user_id"/>
+                            <field name="iot_box_id" readonly="1"/>
+                            <field name="iot_command_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="measure_value"/>
+                            <field name="measure_unit" readonly="1"/>
+                            <field name="picture" widget="image"/>
+                        </group>
+                    </group>
+                    <field name="note" placeholder="Operator notes"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_quality_check" model="ir.actions.act_window">
+        <field name="name">Quality Checks</field>
+        <field name="res_model">filamind.quality.check</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

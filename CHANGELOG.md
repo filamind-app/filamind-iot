@@ -6,6 +6,39 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added — Phase 6: filamind_quality_iot new addon (v0.1.0)
+
+> Roadmap Phase 6 of 16. Quality control with IoT-driven
+> measurements. Community LGPL-3 alternative to Enterprise's
+> `quality_iot` + `quality_control_iot` (which require the OEEL-1
+> `quality_control` module). We deliberately reimplement the quality
+> models from scratch so the addon works on a vanilla Community Odoo.
+
+**Models**
+- `filamind.quality.point` — define a check (Pass/Fail, Measurement,
+  or Picture) on a product/operation. Optional `iot_device_id` to
+  auto-pull values from a caliper/scale/camera.
+- `filamind.quality.check` — one captured measurement. Tracks the
+  IoT command queue id so you can trace which device reading produced
+  which check. Auto-judges Pass/Fail against the point's
+  `tolerance_min/max` for measurement-type checks.
+- `filamind.quality.alert` — open quality issue / non-conformance
+  ticket with severity, state machine, corrective + preventive
+  actions, and chatter.
+
+**IoT integration**
+- Taking a check on a point with `iot_device_id` set fires an
+  `iot_action` (`read_once` or `picture`) and stores the
+  iot.command.queue id on the check.
+- Cron `_cron_apply_iot_results` (every minute) walks completed
+  iot.command.queue rows and copies `value` / `image` / `weight`
+  back into the matching check.
+
+**Sequences + UI**
+- `QP/0001` for points, `QC/00001` for checks.
+- New top-level "Quality" menu (sequence 92).
+- Buttons: Take Check, Re-read from IoT, Pass/Fail, Open Alert.
+
 ### Added — Phase 5: filamind_kitchen_display new addon (v0.1.0)
 
 > Roadmap Phase 5 of 16. Tablet-friendly Kitchen Display System for

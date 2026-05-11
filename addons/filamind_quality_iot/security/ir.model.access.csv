@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_quality_point_user,filamind.quality.point user,model_filamind_quality_point,base.group_user,1,1,1,0
+access_quality_point_admin,filamind.quality.point admin,model_filamind_quality_point,base.group_system,1,1,1,1
+access_quality_check_user,filamind.quality.check user,model_filamind_quality_check,base.group_user,1,1,1,0
+access_quality_check_admin,filamind.quality.check admin,model_filamind_quality_check,base.group_system,1,1,1,1
+access_quality_alert_user,filamind.quality.alert user,model_filamind_quality_alert,base.group_user,1,1,1,0
+access_quality_alert_admin,filamind.quality.alert admin,model_filamind_quality_alert,base.group_system,1,1,1,1
