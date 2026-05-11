@@ -6,6 +6,40 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Changed — Phase 19: filamind_kitchen_display live frontend (v0.2.0)
+
+> Replaces the v0.1.0 vanilla-JS / 5-second-poller with a real
+> WebSocket-driven frontend that pushes new orders instantly,
+> supports drag-and-drop between stage columns, plays an audio
+> chime on each new ticket, and falls back to polling when the
+> WebSocket layer is broken (e.g. unconfigured OpenLiteSpeed).
+
+- New `addons/filamind_kitchen_display/static/src/js/kitchen.js`
+  bundled into `web.assets_frontend`. The controller's HTML page
+  now references the file instead of inlining the JS — devtools
+  set breakpoints and source maps work.
+- Subscribes to channel `filamind_kitchen_<id>` over the public
+  `/websocket` endpoint by sending the bus-protocol JSON
+  subscription frame directly (no Odoo session needed since the
+  page is `auth='public'`).
+- 60-second belt-and-braces poll alongside WS to recover from any
+  silent connection drops.
+- Drag-and-drop tickets between columns; transition POSTs the
+  same `/filamind_kitchen/transition` route the buttons use.
+- Tiny Web Audio API chime when a new order appears (no asset
+  payload). Skips silently in browsers with locked autoplay.
+- Per-card elapsed-time chip showing seconds-then-minutes since
+  the order was fired.
+- Manifest version bumped to `19.0.2.0.0`. Existing installations
+  pick up the new frontend on the next module update without any
+  data migration.
+
+The "OWL component in v0.2.0" note from the controller has been
+honored — but with native browser WebSocket instead of OWL,
+because OWL would require shipping the full backend asset bundle
+on a public, unauthenticated page (megabytes of JS for a
+single-screen app).
+
 ### Added — Phase 17: Real Odoo 19.0 install + --test-enable in CI
 
 > Beyond syntax — every push to main now actually installs all 14

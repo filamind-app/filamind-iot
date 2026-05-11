@@ -1,6 +1,6 @@
 {
     'name': 'Filamind Kitchen Display',
-    'version': '19.0.1.0.0',
+    'version': '19.0.2.0.0',
     'category': 'Point of Sale',
     'summary': 'Tablet-friendly Kitchen Display System (KDS) for restaurants — '
                'community alternative to Enterprise pos_restaurant_preparation_display.',
@@ -62,6 +62,7 @@ Notes
     'assets': {
         'web.assets_frontend': [
             'filamind_kitchen_display/static/src/css/kitchen.css',
+            'filamind_kitchen_display/static/src/js/kitchen.js',
         ],
     },
     'installable': True,

@@ -88,3 +88,17 @@ article.card footer button:hover { background: #6cb6ff; }
 section.col.color-1 article.card { border-left-color: #f44336; }
 section.col.color-5 article.card { border-left-color: #ffeb3b; }
 section.col.color-10 article.card { border-left-color: #4caf50; }
+
+/* Drag and drop hint */
+article.card[draggable="true"] { cursor: grab; }
+article.card[draggable="true"]:active { cursor: grabbing; }
+section.col.dragover { background: #2a3142; outline: 2px dashed #4ea1ff; }
+
+/* Per-card elapsed-time chip */
+article.card .age {
+    font-family: monospace;
+    color: #888;
+    font-size: 0.85rem;
+    margin-left: 0.5rem;
+}
+article.card .age:not(:empty)::before { content: "⏱ "; }

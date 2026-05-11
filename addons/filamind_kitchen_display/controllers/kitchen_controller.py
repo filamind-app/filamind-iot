@@ -87,49 +87,26 @@ class FilamindKitchenController(http.Controller):
 
 
 def _render_minimal_page(display):
-    """Tiny vanilla-JS page that polls /orders every 5 s. Replaced by
-    a proper OWL component in filamind_kitchen_display v0.2.0."""
+    """Single-page kitchen display.
+
+    The interactivity (refresh, drag-drop, transition, audio cue,
+    WebSocket subscription, polling fall-back) lives in
+    static/src/js/kitchen.js so it can be cached and inspected with
+    real browser devtools."""
     return f'''<!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>{display.name}</title>
-<link rel="stylesheet" href="/filamind_kitchen_display/static/src/css/kitchen.css"/>
+<link rel="stylesheet"
+      href="/filamind_kitchen_display/static/src/css/kitchen.css"/>
 </head><body>
-<header><h1>{display.name}</h1>
-<span id="updated">--:--:--</span></header>
+<header>
+  <h1>{display.name}</h1>
+  <span id="updated">--:--:--</span>
+</header>
 <main id="board"><p>Loading…</p></main>
-<script>
-const TOKEN = new URLSearchParams(location.search).get("access_token");
-const DID   = {display.id};
-async function refresh() {{
-  try {{
-    const r = await fetch(`/filamind_kitchen/${{DID}}/orders?access_token=${{TOKEN}}`);
-    if (!r.ok) {{ document.getElementById("board").innerHTML = "<p>access denied</p>"; return; }}
-    const data = await r.json();
-    document.getElementById("updated").textContent = new Date().toLocaleTimeString();
-    const cols = data.stages.map(s => {{
-      const orders = data.orders.filter(o => o.stage_id === s.id);
-      const cards  = orders.map(o => `
-        <article class="card stage-${{s.is_final ? "final" : "active"}}">
-          <header><strong>${{o.pos_order}}</strong>${{o.table ? ` · T${{o.table}}` : ""}}</header>
-          <ul>${{o.lines.map(l => `<li>${{l.qty}}× ${{l.product}}${{l.note ? ` <em>${{l.note}}</em>` : ""}}</li>`).join("")}}</ul>
-          ${{o.customer_note ? `<p class="note">${{o.customer_note}}</p>` : ""}}
-          <footer>${{data.stages.map(t => t.id !== s.id ? `<button onclick="trans(${{o.id}}, ${{t.id}})">→ ${{t.name}}</button>` : "").join("")}}</footer>
-        </article>`).join("");
-      return `<section class="col color-${{s.color}}"><h2>${{s.name}} (${{orders.length}})</h2>${{cards}}</section>`;
-    }}).join("");
-    document.getElementById("board").innerHTML = cols;
-  }} catch(e) {{ console.warn(e); }}
-}}
-async function trans(orderId, stageId) {{
-  await fetch("/filamind_kitchen/transition", {{
-    method: "POST", headers: {{"Content-Type": "application/json"}},
-    body: JSON.stringify({{display_id: DID, order_id: orderId,
-                          target_stage_id: stageId, access_token: TOKEN}}),
-  }});
-  refresh();
-}}
-refresh(); setInterval(refresh, 5000);
-</script>
+<script>window.FILAMIND_KDS_DISPLAY_ID = {display.id};</script>
+<script src="/filamind_kitchen_display/static/src/js/kitchen.js"
+        data-display-id="{display.id}"></script>
 </body></html>'''
