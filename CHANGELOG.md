@@ -6,6 +6,40 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added — Phase 15: filamind_l10n_eu_iot_scale_cert new addon (v0.1.0)
+
+> Roadmap Phase 15 of 16 (Phase 16 is the umbrella sweep). EU
+> "legal-for-trade" / "non-automatic weighing instrument" (NAWI)
+> certification metadata + audit log for IoT scales used in
+> direct-to-consumer commerce. Community alternative to Enterprise
+> `l10n_eu_iot_scale_cert` (OEEL-1).
+
+- `iot.device` extended with EU MID Module B certification fields:
+    - `lne_certificate_number`
+    - `lne_notified_body` (LNE/FR, PTB/DE, AccreditAR/IT, etc.)
+    - `lne_certificate_expiry`
+    - `lne_max_weight_g`, `lne_min_weight_g`, `lne_division_g`
+    - `lne_responsible_user_id` (gets the expiry warnings)
+    - `lne_certificate_status` (computed badge — `ok` / `expiring`
+      / `expired` / `not_certified`).
+- New model `filamind.scale.weighing.event` — one row per weight
+  that flowed into a sale, with `legal` flag set false when the
+  weight was below the certified Min e or the device had no valid
+  certificate at the time. Inspectors filter by `legal=False` to
+  audit cashier conduct.
+- Cron `_cron_check_lne_expiry` (daily) — notifies the metrology
+  responsible 30 days before expiry via mail.thread message_post.
+- Cron `_cron_purge_old_weighing_events` (monthly) — drops events
+  older than `filamind_l10n_eu_iot_scale_cert.retention_days`
+  (config-parameter, default 400 days = 1 year + buffer).
+- Top-level menu "Metrology (LNE)" with the Weighing Events list
+  view (default decoration-danger on illegal rows).
+
+The actual EU Module B certificate issuance and the legal weight
+check on the box itself are out of scope — the M-mark + scale
+firmware certify those; this addon is the server-side metadata
++ audit + reminder layer.
+
 ### Added — Phase 14: filamind_pos_iot_adam_scale new addon (v0.1.0)
 
 > Roadmap Phase 14 of 16. Adam Equipment scale (CPWplus, GFK, GBK,

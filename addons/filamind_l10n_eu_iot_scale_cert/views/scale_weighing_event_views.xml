@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_scale_weighing_event_list" model="ir.ui.view">
+        <field name="name">filamind.scale.weighing.event.list</field>
+        <field name="model">filamind.scale.weighing.event</field>
+        <field name="arch" type="xml">
+            <list string="Legal-for-Trade Weighing Events"
+                  decoration-danger="not legal">
+                <field name="create_date"/>
+                <field name="device_id"/>
+                <field name="weight_g"/>
+                <field name="unit"/>
+                <field name="cashier_id"/>
+                <field name="pos_order_id"/>
+                <field name="pos_order_line_id"/>
+                <field name="legal" widget="boolean"/>
+                <field name="note"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_scale_weighing_event_search" model="ir.ui.view">
+        <field name="name">filamind.scale.weighing.event.search</field>
+        <field name="model">filamind.scale.weighing.event</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="device_id"/>
+                <field name="cashier_id"/>
+                <field name="pos_order_id"/>
+                <filter name="illegal" string="Below Min e (illegal)"
+                        domain="[('legal', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_device" string="Scale"
+                            context="{'group_by': 'device_id'}"/>
+                    <filter name="group_cashier" string="Cashier"
+                            context="{'group_by': 'cashier_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_scale_weighing_event"
+            model="ir.actions.act_window">
+        <field name="name">Weighing Events</field>
+        <field name="res_model">filamind.scale.weighing.event</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_scale_weighing_event_search"/>
+    </record>
+
+</odoo>

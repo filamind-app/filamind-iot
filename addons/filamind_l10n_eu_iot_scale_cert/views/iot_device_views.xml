@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_iot_device_form_lne" model="ir.ui.view">
+        <field name="name">iot.device.form.lne</field>
+        <field name="model">iot.device</field>
+        <field name="inherit_id" ref="filamind_iot.view_iot_device_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="EU MID / LNE Certification (filamind)"
+                       name="filamind_lne_group"
+                       invisible="type_code != 'scale'">
+                    <field name="lne_certificate_status"
+                           widget="badge"
+                           decoration-success="lne_certificate_status == 'ok'"
+                           decoration-warning="lne_certificate_status == 'expiring'"
+                           decoration-danger="lne_certificate_status == 'expired'"
+                           decoration-muted="lne_certificate_status == 'not_certified'"/>
+                    <field name="lne_certificate_number"/>
+                    <field name="lne_notified_body"/>
+                    <field name="lne_certificate_expiry"/>
+                    <field name="lne_max_weight_g"/>
+                    <field name="lne_min_weight_g"/>
+                    <field name="lne_division_g"/>
+                    <field name="lne_responsible_user_id"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_scale_weighing_event_user,scale.weighing.event.user,model_filamind_scale_weighing_event,base.group_user,1,0,0,0
+access_scale_weighing_event_manager,scale.weighing.event.manager,model_filamind_scale_weighing_event,base.group_system,1,1,1,1

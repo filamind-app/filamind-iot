@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem id="menu_lne_root"
+              name="Metrology (LNE)"
+              parent="filamind_iot.iot_menu_root"
+              sequence="80"/>
+
+    <menuitem id="menu_lne_weighing_events"
+              name="Weighing Events"
+              parent="menu_lne_root"
+              action="action_scale_weighing_event"
+              sequence="10"/>
+
+</odoo>

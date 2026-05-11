@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="cron_check_lne_expiry" model="ir.cron">
+        <field name="name">Filamind: check LNE certificate expiry</field>
+        <field name="model_id" ref="filamind_iot.model_iot_device"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_check_lne_expiry()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="numbercall">-1</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <record id="cron_purge_old_weighing_events" model="ir.cron">
+        <field name="name">Filamind: purge old legal-for-trade weighing events</field>
+        <field name="model_id" ref="model_filamind_scale_weighing_event"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_purge_old_weighing_events()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">months</field>
+        <field name="numbercall">-1</field>
+        <field name="active" eval="True"/>
+    </record>
+
+</odoo>
