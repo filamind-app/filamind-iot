@@ -1,0 +1,61 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-odoo}
+      POSTGRES_DB: postgres
+    volumes:
+      - filamind_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', 'odoo']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  odoo:
+    build: .
+    image: filamind-iot:latest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_USER: odoo
+      DB_PASSWORD: ${DB_PASSWORD:-odoo}
+      DB_NAME: ${DB_NAME:-filamind}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
+      WORKERS: ${WORKERS:-2}
+      MAX_CRON_THREADS: 1
+      FILAMIND_AUTO_INSTALL: '1'
+    ports:
+      - '8069:8069'   # main HTTP
+      - '8072:8072'   # gevent (websocket)
+    volumes:
+      - filamind_data:/var/lib/odoo
+      # Optional: mount your own addons on top
+      # - ./local-addons:/mnt/extra-addons/local
+
+  # Caddy reverse proxy with the recipe from docs/REVERSE_PROXY_PLATFORMS.md
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - odoo
+    ports:
+      - '${CADDY_HTTP_PORT:-80}:80'
+      - '${CADDY_HTTPS_PORT:-443}:443'
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - filamind_caddy_data:/data
+      - filamind_caddy_config:/config
+
+volumes:
+  filamind_pg:
+  filamind_data:
+  filamind_caddy_data:
+  filamind_caddy_config:

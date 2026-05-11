@@ -6,6 +6,37 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added — Phase 23: Docker image + GHCR release automation
+
+> One-click run with `docker compose up -d` — useful for support
+> reproductions, integration testing, and small production
+> deployments.
+
+- `Dockerfile` — extends the official `odoo:19.0` image, drops
+  every filamind addon into `/mnt/extra-addons/filamind/`, and
+  ships a `filamind-entrypoint` shim that:
+  * waits for Postgres on `${DB_HOST}:${DB_PORT}`,
+  * pre-installs `filamind_iot_full` on first boot of a fresh DB
+    (idempotent — set `FILAMIND_AUTO_INSTALL=0` to disable),
+  * hands off to `odoo` with the rendered config.
+- `docker-compose.yml` — three services: Postgres 16, the
+  filamind Odoo image, and Caddy as the bundled reverse proxy
+  (configured per `docs/REVERSE_PROXY_PLATFORMS.md`'s recipe).
+  Persistent volumes for PG, Odoo data, and Caddy config.
+- `docker/odoo.conf` template with `${ENV_VAR}` interpolation;
+  `proxy_mode = True`, `gevent_port = 8072` baked in.
+- `.github/workflows/release-docker.yml` — every project-wide
+  `v*.*.*` tag (and every `filamind_iot_full/v*.*.*` tag)
+  triggers a multi-arch build (`linux/amd64` + `linux/arm64`)
+  pushed to `ghcr.io/<repo>:<version>` + `:latest` with GHA
+  cache enabled.
+
+The matching `.img` build automation for filamind-iotbox already
+exists at `filamind-iotbox/.github/workflows/release.yml` —
+every `v*` tag there builds, splits, hashes, and uploads the
+flashable image to a GitHub Release with cross-platform
+download scripts.
+
 ### Fixed — Phase 22b: filamind_mrp_iot view rejected by 19.0 view validator
 
 > Third Odoo CI install attempt revealed a view-side bug surfaced
