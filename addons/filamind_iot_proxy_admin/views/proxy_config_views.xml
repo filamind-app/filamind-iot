@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_iot_proxy_config_form" model="ir.ui.view">
+        <field name="name">iot.proxy.config.form</field>
+        <field name="model">iot.proxy.config</field>
+        <field name="arch" type="xml">
+            <form string="filamind-iot-proxy Configuration">
+                <header>
+                    <button name="action_check_health" type="object"
+                            string="Check Health" class="oe_highlight"/>
+                    <button name="action_refresh_all" type="object"
+                            string="Refresh All"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="Connection">
+                            <field name="proxy_url"
+                                   placeholder="https://iot-proxy.filamind.app"/>
+                            <field name="admin_token" password="True"/>
+                            <field name="timeout"/>
+                            <field name="active"/>
+                        </group>
+                        <group string="Last Health Check">
+                            <field name="last_health" readonly="1"/>
+                            <field name="last_health_at" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_iot_proxy_config_list" model="ir.ui.view">
+        <field name="name">iot.proxy.config.list</field>
+        <field name="model">iot.proxy.config</field>
+        <field name="arch" type="xml">
+            <list string="filamind-iot-proxy Configs">
+                <field name="proxy_url"/>
+                <field name="last_health"/>
+                <field name="last_health_at"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_iot_proxy_config" model="ir.actions.act_window">
+        <field name="name">Proxy Configuration</field>
+        <field name="res_model">iot.proxy.config</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

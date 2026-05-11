@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_iot_proxy_config,iot.proxy.config,model_iot_proxy_config,base.group_system,1,1,1,1
+access_iot_proxy_tenant,iot.proxy.tenant,model_iot_proxy_tenant,base.group_system,1,1,1,1
+access_iot_proxy_box,iot.proxy.box,model_iot_proxy_box,base.group_system,1,1,1,1
+access_iot_proxy_audit,iot.proxy.audit,model_iot_proxy_audit,base.group_system,1,0,0,0
+access_iot_proxy_tenant_create_wizard,iot.proxy.tenant.create.wizard,model_iot_proxy_tenant_create_wizard,base.group_system,1,1,1,1
+access_iot_proxy_finalize_wizard,iot.proxy.finalize.wizard,model_iot_proxy_finalize_wizard,base.group_system,1,1,1,1

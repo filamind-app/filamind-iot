@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_iot_proxy_box_list" model="ir.ui.view">
+        <field name="name">iot.proxy.box.list</field>
+        <field name="model">iot.proxy.box</field>
+        <field name="arch" type="xml">
+            <list string="Proxy Boxes" decoration-success="state == 'paired'"
+                  decoration-warning="state == 'pending'"
+                  decoration-danger="state == 'revoked'">
+                <field name="serial_number"/>
+                <field name="state"/>
+                <field name="tenant_id"/>
+                <field name="paired_server_url"/>
+                <field name="paired_at"/>
+                <field name="last_seen"/>
+                <field name="proxy_id" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_iot_proxy_box_form" model="ir.ui.view">
+        <field name="name">iot.proxy.box.form</field>
+        <field name="model">iot.proxy.box</field>
+        <field name="arch" type="xml">
+            <form string="Proxy Box" create="false" edit="false">
+                <header>
+                    <button name="action_unpair" type="object"
+                            string="Unpair"
+                            invisible="state != 'paired'"
+                            confirm="Unpair this box on the proxy? It will revert to 'pending' and the customer's Odoo will lose its association."/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="pending,paired"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="serial_number"/></h1>
+                    </div>
+                    <group>
+                        <group string="Identity">
+                            <field name="remote_id" string="Box ID"/>
+                            <field name="tenant_id"/>
+                            <field name="proxy_id"/>
+                        </group>
+                        <group string="Pairing">
+                            <field name="paired_db_uuid"/>
+                            <field name="paired_server_url"/>
+                            <field name="paired_at"/>
+                            <field name="last_seen"/>
+                            <field name="remote_created_at"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_iot_proxy_box" model="ir.actions.act_window">
+        <field name="name">Boxes</field>
+        <field name="res_model">iot.proxy.box</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>
