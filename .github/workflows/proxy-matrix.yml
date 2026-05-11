@@ -76,9 +76,13 @@ jobs:
               sudo apt-get update -qq
               sudo apt-get install -qq -y apache2
               sudo systemctl stop apache2 || true
-              sudo cp tests/proxy_matrix/apache.conf /etc/apache2/apache2.conf
+              sudo a2enmod proxy proxy_http proxy_wstunnel headers >/dev/null
+              sudo cp tests/proxy_matrix/apache.conf /etc/apache2/sites-available/iot.conf
+              sudo a2dissite 000-default >/dev/null 2>&1 || true
+              sudo a2ensite iot >/dev/null
+              echo 'Listen 8080' | sudo tee /etc/apache2/ports.conf >/dev/null
               sudo apache2ctl -t
-              sudo apache2ctl start
+              sudo systemctl start apache2
               ;;
             traefik)
               VER=v2.11.0
