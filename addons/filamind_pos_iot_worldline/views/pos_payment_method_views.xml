@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_pos_payment_method_form_worldline" model="ir.ui.view">
+        <field name="name">pos.payment.method.form.worldline</field>
+        <field name="model">pos.payment.method</field>
+        <field name="inherit_id"
+               ref="point_of_sale.pos_payment_method_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="Worldline Terminal (filamind)"
+                       name="filamind_pos_iot_worldline_group"
+                       invisible="not iot_terminal_id">
+                    <field name="iot_worldline_terminal_id"/>
+                    <field name="iot_worldline_protocol"/>
+                    <field name="iot_worldline_currency_code"/>
+                    <field name="iot_worldline_language"/>
+                    <field name="iot_worldline_manual_entry_allowed"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

@@ -6,6 +6,38 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added — Phase 13: filamind_pos_iot_worldline new addon (v0.1.0)
+
+> Roadmap Phase 13 of 16. Worldline (CTEP / Sips-Sherlocks)
+> payment terminal support for filamind_pos_iot. Worldline is a
+> Six-owned acquirer/PSP whose terminals speak the CTEP family.
+> Community alternative to Enterprise `pos_iot_worldline` (OEEL-1).
+
+- `pos.payment.method` extended:
+    - `iot_worldline_terminal_id` — TID assigned by Worldline.
+    - `iot_worldline_protocol` — `ctep` (USB/serial) or
+      `cless_evo` (network).
+    - `iot_worldline_currency_code` — ISO-4217 numeric (e.g.
+      `978` = EUR) baked into terminal config; cross-checked with
+      the POS journal currency to catch misconfigurations.
+    - `iot_worldline_manual_entry_allowed` — keyed-PAN fallback
+      flag (PCI-DSS treats this as higher-risk).
+    - `iot_worldline_language` — ISO 639-1 cardholder-prompt code.
+- `iot_request_payment` overridden so the IoT payload includes
+  Worldline-specific CTEP fields and bumps timeout to 180s.
+- `pos.payment` extended with response capture (all readonly):
+  `iot_worldline_authorization_code`,
+  `iot_worldline_card_brand`,
+  `iot_worldline_card_last4`,
+  `iot_worldline_emv_aid`,
+  `iot_worldline_emv_tvr` (Terminal Verification Results — required
+  evidence in chargeback defense),
+  `iot_worldline_emv_tsi` (Transaction Status Information),
+  `iot_worldline_signature_required`. The full PAN is **never**
+  stored.
+- `_filamind_apply_worldline_response(response)` — entry point the
+  IoT controller / cron calls when the box reports back.
+
 ### Added — Phase 12: filamind_pos_iot_six new addon (v0.1.0)
 
 > Roadmap Phase 12 of 16. Six (Worldline-AG-owned, formerly SIX
