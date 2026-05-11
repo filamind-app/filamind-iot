@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_event_form_iot" model="ir.ui.view">
+        <field name="name">event.event.form.iot</field>
+        <field name="model">event.event</field>
+        <field name="inherit_id" ref="event.view_event_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="IoT (filamind)" name="filamind_event_iot_group">
+                    <field name="iot_badge_printer_id"
+                           options="{'no_create': True}"/>
+                    <field name="iot_scanner_id"
+                           options="{'no_create': True}"/>
+                    <field name="auto_print_badges"
+                           readonly="not iot_badge_printer_id"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

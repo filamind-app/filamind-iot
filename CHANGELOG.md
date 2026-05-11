@@ -6,6 +6,34 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added — Phase 8: filamind_event_iot new addon (v0.1.0)
+
+> Roadmap Phase 8 of 16. Bridges the LGPL `event` module with the
+> filamind IoT gateway. Community alternative to Enterprise
+> `event_iot` + `event_sale_iot` + `pos_event_iot` (all OEEL-1).
+
+- `event.event.iot_badge_printer_id` — printer that issues attendee
+  badges (filtered to `subtype=printer`).
+- `event.event.iot_scanner_id` — scanner that checks attendees in by
+  reading their badge barcode (filtered to `subtype=scanner`).
+- `event.event.auto_print_badges` — disable per event (default: on).
+- `event.registration.iot_badge_print_command_id` (m2o → iot.command.queue,
+  readonly) and `event.registration.iot_badge_printed_date` (datetime,
+  readonly) for traceability of which print job produced which badge.
+- Auto-print hook on `event.registration.write`: when a registration
+  flips to `state=open` (confirmed) and the linked event has
+  `auto_print_badges` and a configured `iot_badge_printer_id`, the
+  badge prints once via `iot.box.send_bus_message`. Print failures
+  do not break confirmation — staff can reprint manually.
+- `event.registration.action_iot_print_badge()` — manual reprint
+  button on the registration form.
+- `event.registration.action_iot_check_in()` — manual check-in button
+  alongside the scanner-driven path (the scanner path is wired by the
+  `iot.trigger` system from filamind_iot).
+- Plain-text badge template (`_render_iot_badge`) — override for
+  ESC/POS, ZPL, or branded layouts. Variables exposed: event name,
+  attendee name, email, event date, registration ref.
+
 ### Added — Phase 7: filamind_self_order_iot new addon (v0.1.0)
 
 > Roadmap Phase 7 of 16. Bridges the LGPL `pos_self_order` kiosk

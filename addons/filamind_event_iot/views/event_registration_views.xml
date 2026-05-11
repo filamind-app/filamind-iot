@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_event_registration_form_iot" model="ir.ui.view">
+        <field name="name">event.registration.form.iot</field>
+        <field name="model">event.registration</field>
+        <field name="inherit_id" ref="event.view_event_registration_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_iot_print_badge"
+                        string="Print Badge"
+                        type="object"
+                        class="btn-secondary"
+                        invisible="not event_id"/>
+                <button name="action_iot_check_in"
+                        string="Check In (IoT)"
+                        type="object"
+                        class="btn-primary"
+                        invisible="state == 'done'"/>
+            </xpath>
+            <xpath expr="//sheet" position="inside">
+                <group string="IoT (filamind)"
+                       name="filamind_event_iot_reg_group">
+                    <field name="iot_badge_printed_date" readonly="1"/>
+                    <field name="iot_badge_print_command_id" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
