@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_iot_proxy_root"
+              name="IoT Proxy"
+              sequence="40"/>
+
+    <menuitem id="menu_iot_proxy_boxes"
+              name="Boxes"
+              parent="menu_iot_proxy_root"
+              action="action_iot_proxy_box"
+              sequence="10"/>
+
+    <menuitem id="menu_iot_proxy_tenants"
+              name="Tenants"
+              parent="menu_iot_proxy_root"
+              action="action_iot_proxy_tenant"
+              sequence="20"/>
+
+    <menuitem id="menu_iot_proxy_audit"
+              name="Audit Log"
+              parent="menu_iot_proxy_root"
+              action="action_iot_proxy_audit"
+              sequence="30"/>
+
+    <menuitem id="menu_iot_proxy_actions"
+              name="Actions"
+              parent="menu_iot_proxy_root"
+              sequence="40"/>
+
+    <menuitem id="menu_iot_proxy_create_tenant"
+              name="Create Tenant…"
+              parent="menu_iot_proxy_actions"
+              action="action_iot_proxy_tenant_create_wizard"
+              sequence="10"/>
+
+    <menuitem id="menu_iot_proxy_finalize"
+              name="Finalize Pairing Code…"
+              parent="menu_iot_proxy_actions"
+              action="action_iot_proxy_finalize_wizard"
+              sequence="20"/>
+
+    <menuitem id="menu_iot_proxy_config"
+              name="Configuration"
+              parent="menu_iot_proxy_root"
+              action="action_iot_proxy_config"
+              sequence="90"/>
+</odoo>

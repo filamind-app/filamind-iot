@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_iot_proxy_audit_list" model="ir.ui.view">
+        <field name="name">iot.proxy.audit.list</field>
+        <field name="model">iot.proxy.audit</field>
+        <field name="arch" type="xml">
+            <list string="Proxy Audit Log" create="false" edit="false">
+                <field name="ts"/>
+                <field name="actor"/>
+                <field name="event"/>
+                <field name="box_id"/>
+                <field name="tenant_id"/>
+                <field name="payload" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_iot_proxy_audit_search" model="ir.ui.view">
+        <field name="name">iot.proxy.audit.search</field>
+        <field name="model">iot.proxy.audit</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="event"/>
+                <field name="actor"/>
+                <field name="box_id"/>
+                <field name="tenant_id"/>
+                <filter name="connect" string="connect"
+                        domain="[('event', '=', 'connect')]"/>
+                <filter name="finalize" string="finalize"
+                        domain="[('event', '=', 'finalize')]"/>
+                <filter name="unpair" string="unpair"
+                        domain="[('event', '=', 'unpair')]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_iot_proxy_audit" model="ir.actions.act_window">
+        <field name="name">Audit Log</field>
+        <field name="res_model">iot.proxy.audit</field>
+        <field name="view_mode">list</field>
+    </record>
+</odoo>

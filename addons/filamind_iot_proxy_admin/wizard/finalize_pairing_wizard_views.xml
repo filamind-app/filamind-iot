@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_iot_proxy_finalize_wizard_form" model="ir.ui.view">
+        <field name="name">iot.proxy.finalize.wizard.form</field>
+        <field name="model">iot.proxy.finalize.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Finalize Pairing on Proxy">
+                <p class="text-muted">
+                    Manually claim a pairing code on behalf of a target Odoo
+                    DB. Usually the customer's Odoo does this automatically;
+                    this wizard exists for manual pairing or rescue scenarios.
+                </p>
+                <group>
+                    <field name="code" placeholder="ABCD2345"/>
+                    <field name="db_uuid"/>
+                    <field name="server_url" placeholder="https://customer.example.com"/>
+                </group>
+                <footer>
+                    <button name="action_finalize" type="object"
+                            string="Finalize" class="btn-primary"/>
+                    <button special="cancel" string="Cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_iot_proxy_finalize_wizard" model="ir.actions.act_window">
+        <field name="name">Finalize Pairing</field>
+        <field name="res_model">iot.proxy.finalize.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

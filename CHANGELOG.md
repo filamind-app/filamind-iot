@@ -6,6 +6,39 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added — `filamind_iot_proxy_admin` (operator UI for filamind-iot-proxy)
+
+> Phase 4b of the
+> [filamind-iot-proxy roadmap](https://github.com/filamind-app/filamind-iot-proxy/blob/main/ROADMAP.md).
+> Standalone addon that lets an operator manage a self-hosted
+> [filamind-iot-proxy](https://github.com/filamind-app/filamind-iot-proxy)
+> without leaving Odoo.
+
+- **`iot.proxy.config`** singleton — holds proxy URL + bearer token,
+  with a one-click "Check Health" button against `/healthz` and a
+  "Refresh All" that pulls tenants, boxes, and audit.
+- **`iot.proxy.tenant`** (read-only mirror) — list + form views with
+  a "Delete on Proxy" button (proxy returns 409 if the tenant still
+  has boxes; the addon surfaces that as a UserError).
+- **`iot.proxy.box`** (read-only mirror) — colour-coded list
+  (paired/pending/revoked) with an "Unpair" button on the form.
+- **`iot.proxy.audit`** (read-only mirror) — filterable by
+  `connect` / `finalize` / `unpair` events.
+- **Two wizards**:
+  * "Create Tenant…" — POSTs to `/admin/tenants`.
+  * "Finalize Pairing Code…" — manual claim flow for rescue
+    pairings, calls `/iot/finalize`.
+- **Auth**: every request carries
+  `Authorization: Bearer <admin_token>`. 401/403/503 from the proxy
+  map to `UserError` with a human message.
+- **Not** auto-installed by `filamind_iot_full`. Operators that
+  don't run a proxy don't get this addon forced on them.
+- New addon added to the `ADDONS` env in `.github/workflows/ci.yml`
+  so lint + XML + manifest-sanity all run against it.
+
+Pairs with **filamind-iot-proxy v0.2.0** (Phase 4a — admin REST API
+with bearer auth).
+
 ### Added — `tools/upgrade.sh` one-step upgrade helper
 
 > Surfaced by a real upgrade against the deltafabs.com production
