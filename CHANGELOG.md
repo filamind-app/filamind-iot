@@ -6,6 +6,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added — Phase 10: docs per-platform reverse-proxy recipes
+
+> Roadmap Phase 10 of 16. A copy-paste reverse-proxy snippet for
+> every common hosting setup so admins don't have to debug the
+> WebSocket layer themselves.
+
+- `docs/REVERSE_PROXY_PLATFORMS.md` covers nginx (vanilla), Caddy
+  (recommended OLS workaround), Apache 2.4 (mod_proxy_wstunnel),
+  Traefik v2/v3, HAProxy 2.x, OpenLiteSpeed/CyberPanel (with the
+  Caddy-sidecar layout that works around the `Connection:
+  Keep-Alive` 101-response bug), aaPanel, Plesk, cPanel/WHM, IIS
+  (with URL Rewrite + ARR + WebSocket Protocol), Cloudflare, and
+  bare systemd + nginx.
+- Each section is self-contained — pick the one that matches your
+  panel and apply verbatim.
+- A "How to verify" curl-based recipe at the end shows how to
+  hand-test each transport (WebSocket 101, long-poll, short-poll)
+  end-to-end.
+
 ### Added — Phase 9: filamind_l10n_eg_iot new addon (v0.1.0)
 
 > Roadmap Phase 9 of 16. Egyptian Tax Authority (ETA) hardware-fiscal
