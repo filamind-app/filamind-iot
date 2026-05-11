@@ -10,3 +10,6 @@ access_iot_connection_log_admin,iot.connection.log admin,model_iot_connection_lo
 access_iot_pairing_wizard_user,iot.pairing.wizard user,model_iot_pairing_wizard,base.group_user,1,1,1,1
 access_iot_command_queue_user,iot.command.queue user,model_iot_command_queue,base.group_user,1,0,0,0
 access_iot_command_queue_admin,iot.command.queue admin,model_iot_command_queue,base.group_system,1,1,1,1
+access_iot_channel_admin,iot.channel admin,model_iot_channel,base.group_system,1,1,1,1
+access_iot_keyboard_layout_user,iot.keyboard.layout user,model_iot_keyboard_layout,base.group_user,1,0,0,0
+access_iot_keyboard_layout_admin,iot.keyboard.layout admin,model_iot_keyboard_layout,base.group_system,1,1,1,1

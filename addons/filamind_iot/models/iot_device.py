@@ -52,6 +52,40 @@ class IotDevice(models.Model):
         help='Free-form qualifier, e.g. "receipt", "label", "shipping".',
     )
 
+    # ── Upstream-Enterprise-parity fields (Phase 1) ──────────────────────
+    iot_ip = fields.Char(
+        string='Device IP',
+        help='Optional IP for network-based devices (cameras, IP printers, '
+             'scales on the LAN). Distinct from the box IP.',
+    )
+    is_scanner = fields.Boolean(
+        string='Behaves as Scanner',
+        help='For HID keyboard-class devices, mark this if the device is a '
+             'barcode scanner (rapid bursts of keystrokes).',
+    )
+    keyboard_layout = fields.Many2one(
+        'iot.keyboard.layout', string='Keyboard Layout',
+        help='X11 layout to use for this keyboard / scanner.',
+    )
+    report_ids = fields.Many2many(
+        'ir.actions.report', 'iot_device_report_rel',
+        'device_id', 'report_id',
+        string='Default Reports',
+        help='Reports that will print on this device by default.',
+    )
+    display_orientation = fields.Selection(
+        [('landscape', 'Landscape'),
+         ('portrait', 'Portrait'),
+         ('landscape_inverted', 'Landscape (Inverted)'),
+         ('portrait_inverted', 'Portrait (Inverted)')],
+        string='Display Orientation',
+        help='For HDMI displays only.',
+    )
+    display_url = fields.Char(
+        string='Display URL',
+        help='URL the box should render on this display device.',
+    )
+
     state = fields.Selection([
         ('online', 'Online'),
         ('offline', 'Offline'),

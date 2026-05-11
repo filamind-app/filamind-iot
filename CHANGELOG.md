@@ -6,6 +6,48 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added — Phase 1: Upstream protocol parity (filamind_iot v19.0.3.0.0)
+
+> Roadmap Phase 1 of 16. After this release, an unmodified upstream
+> Odoo IoT Box image can pair with filamind-iot and ship logs / keyboard
+> layouts / display URLs without code changes on the box.
+
+- New model `iot.channel` (singleton) — `get_iot_channel()` returns the
+  shared `bus.bus` channel name from
+  `ir.config_parameter['iot.ws_channel']`. Generated lazily on first
+  call. Lets upstream `pos_iot` / `mrp_iot` extension code coexist
+  with our per-box channel design.
+- New model `iot.keyboard.layout` — populated by the box's keyboard
+  driver POSTing to `/iot/keyboard_layouts`. Used as the dropdown for
+  per-device layouts on `iot.device`.
+- `iot.box` extended with Enterprise-parity fields:
+  `use_custom_handlers`, `must_install_fdm_module`, `use_lna`,
+  `can_be_kiosk`, `ssl_certificate_end_date`, `version_commit_url`,
+  `associated_pos_config_ids` (computed; safe when POS isn't installed).
+- `iot.device` extended with: `iot_ip` (LAN IP for network devices),
+  `is_scanner`, `keyboard_layout` (m2o → iot.keyboard.layout),
+  `report_ids` (m2m → ir.actions.report — bind a printer to default
+  reports), `display_orientation`, `display_url`.
+- New HTTP endpoints (registered with both `/filamind_iot/...` and
+  `/iot/...` aliases for upstream compatibility):
+  * `POST /iot/log` — streaming text log shipper, persists into
+    `iot.connection.log` with severity inferred from log level.
+  * `POST /iot/keyboard_layouts` — form-encoded JSON list of X11
+    layouts; deduplicates against existing `iot.keyboard.layout` rows.
+  * `GET /iot/box/<box_id>/display_url` — returns
+    `{device_identifier: url}` for every display device on the box.
+  * `POST /iot/get_handlers` — stub returning `{not_modified: True}`
+    so the upstream box's handler-download loop is satisfied.
+- `/filamind_iot/pair` response now also returns `db_name`,
+  `ws_channel` (the shared one), `transports`, and
+  `min_poll_interval` so the box's WebsocketClient can build its
+  `/web/login?db=...` URL and so future multi-transport probing
+  (Phase 2) has hints from the server.
+- ACL added for the two new models.
+- CI route-aliases check broadened: any `/iot/*` path now counts as a
+  valid upstream alias (was previously only `/iot/box/*` or
+  `/iot/setup`).
+
 ### Changed — roadmap scope expanded to 100 % parity (v0.3.3 docs)
 - Reclassified the four modules previously marked "out-of-scope":
   * `pos_iot_six` — buildable, the LGPL Six driver already ships on

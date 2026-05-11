@@ -135,11 +135,21 @@ jobs:
           ).read_text()
           decls = re.findall(r'@http\.route\(\s*\[([^\]]+)\]', src)
           fail = False
+          # An ALIAS path is anything beginning with /iot/ that isn't already
+          # a /filamind_iot/ path.  This covers /iot/setup, /iot/log,
+          # /iot/keyboard_layouts, /iot/get_handlers, /iot/box/<id>/display_url,
+          # and /iot/box/<action>.
+          alias_re = re.compile(r"['\"](/iot/[^'\"]+)['\"]")
+          fila_re  = re.compile(r"['\"](/filamind_iot/[^'\"]+)['\"]")
           for d in decls:
-              has_filamind = '/filamind_iot/' in d
-              has_alias = ('/iot/box/' in d) or ('/iot/setup' in d)
-              if not (has_filamind and has_alias):
-                  print(f"::error::route lacks a paired filamind/iot alias: {d.strip()}")
+              filaminds = fila_re.findall(d)
+              aliases   = [p for p in alias_re.findall(d)
+                            if not p.startswith('/filamind_iot/')]
+              if not filaminds:
+                  print(f"::error::route missing a /filamind_iot/* canonical path: {d.strip()}")
+                  fail = True
+              if not aliases:
+                  print(f"::error::route missing an /iot/* upstream alias: {d.strip()}")
                   fail = True
           sys.exit(1 if fail else 0)
           PY

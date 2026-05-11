@@ -55,6 +55,40 @@ class IotBox(models.Model):
              '/iot/setup call. Server-side commands target this channel.',
     )
 
+    # ── Upstream-Enterprise-parity fields (Phase 1) ──────────────────────
+    use_custom_handlers = fields.Boolean(
+        string='Use Custom Handlers',
+        help='Opt-in to fetch custom drivers via /iot/get_handlers.',
+    )
+    must_install_fdm_module = fields.Boolean(
+        string='Requires Fiscal Data Module',
+        help='True when this box must run a country-specific fiscal '
+             'data module (Belgium, Sweden, etc.).',
+    )
+    use_lna = fields.Boolean(
+        string='LNA Logging',
+        help='Enable EU LNE Logging-Network-Activity for trade scales.',
+    )
+    can_be_kiosk = fields.Boolean(
+        string='Can be Kiosk',
+        help='Allow this box to host a self-order kiosk display.',
+    )
+    ssl_certificate_end_date = fields.Datetime(
+        string='SSL Cert Expiry', readonly=True,
+        help='When the box-side TLS certificate expires.',
+    )
+    version_commit_url = fields.Html(
+        string='Image Commit URL', readonly=True,
+        help='Hyperlink to the Git commit the running image was built from.',
+    )
+    associated_pos_config_ids = fields.Many2many(
+        'pos.config', string='POS Configurations',
+        compute='_compute_associated_pos_config_ids', store=False,
+        help='POS configurations whose iot_*_id fields point to a device '
+             'on this box. Computed from filamind_pos_iot if installed; '
+             'otherwise empty.',
+    )
+
     state = fields.Selection([
         ('new', 'Not Paired'),
         ('pairing', 'Pairing'),
@@ -130,6 +164,34 @@ class IotBox(models.Model):
             box.log_count = len(box.connection_log_ids)
             box.command_count = Cmd.search_count(
                 [('iot_box_id', '=', box.id)])
+
+    def _compute_associated_pos_config_ids(self):
+        """Best-effort: list pos.config records that pin a device on this box.
+        Returns empty when point_of_sale isn't installed."""
+        PosConfig = self.env.get('pos.config')
+        if PosConfig is None:
+            for box in self:
+                box.associated_pos_config_ids = False
+            return
+        # Read every iot.device on each box, then find pos.config rows
+        # whose iot_*_id fields reference any of those devices.
+        for box in self:
+            device_ids = box.device_ids.ids
+            if not device_ids:
+                box.associated_pos_config_ids = False
+                continue
+            domain = [
+                '|', '|', '|',
+                ('iot_device_ids', 'in', device_ids),
+                ('iot_printer_id', 'in', device_ids),
+                ('iot_scale_id', 'in', device_ids),
+                ('iot_scanner_id', 'in', device_ids),
+            ]
+            try:
+                box.associated_pos_config_ids = PosConfig.sudo().search(domain)
+            except Exception:
+                # filamind_pos_iot not installed: those fields don't exist yet
+                box.associated_pos_config_ids = False
 
     # ── ORM ──────────────────────────────────────────────────────────────
     @api.model_create_multi

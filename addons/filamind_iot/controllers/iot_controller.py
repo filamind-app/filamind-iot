@@ -99,6 +99,13 @@ class IotController(http.Controller):
                 'box_id': box.id,
                 'name': box.name,
                 'token': box.sudo().token,
+                # filamind extension fields the box patch (002) saves into
+                # /home/pi/odoo.conf so the WebsocketClient can build the
+                # /web/login?db=... URL needed for an authenticated WS.
+                'db_name': request.env.cr.dbname,
+                'ws_channel': request.env['iot.channel'].sudo().get_iot_channel(),
+                'transports': ['websocket', 'longpoll', 'shortpoll'],
+                'min_poll_interval': 5,
             })
 
         except Exception:
@@ -412,6 +419,141 @@ class IotController(http.Controller):
 
         except Exception:
             return _internal_error('IoT command_result failed')
+
+    # ── Upstream-parity endpoints (Phase 1) ──────────────────────────────
+    @http.route(['/filamind_iot/log', '/iot/log'],
+                type='http', auth='public', methods=['POST'], csrf=False)
+    def collect_log(self, **post):
+        """Streaming log shipper. The upstream box POSTs chunked text
+        (NOT JSON) here every 0.5 s. Body shape:
+
+            identifier <IOT_IDENTIFIER><log/>
+            <level>,<message><log/>
+            <level>,<message><log/>
+            ...
+
+        Header `X-Odoo-Database` = db name.
+
+        We just persist the lines into iot.connection.log (severity from
+        the level) and return 200. No response body required.
+        """
+        try:
+            body = request.httprequest.get_data(as_text=True)
+            if not body:
+                return _json_response({'status': 'ok'})
+
+            ip = _client_ip()
+            box_identifier = ''
+            lines = []
+            for raw in body.split('<log/>'):
+                line = raw.strip()
+                if not line:
+                    continue
+                if line.startswith('identifier '):
+                    box_identifier = line[len('identifier '):].strip()
+                else:
+                    lines.append(line)
+
+            if not box_identifier or not lines:
+                return _json_response({'status': 'ok', 'accepted': 0})
+
+            box = request.env['iot.box'].sudo().search(
+                [('identifier', '=', box_identifier)], limit=1)
+            if not box:
+                # Unknown box — accept but drop on the floor (avoid 401 spam)
+                return _json_response({'status': 'ok', 'matched': False})
+
+            Log = request.env['iot.connection.log'].sudo()
+            for line in lines[:50]:  # cap to avoid runaway batches
+                level, _, message = line.partition(',')
+                severity = {
+                    'WARNING': 'warn', 'ERROR': 'error', 'CRITICAL': 'error',
+                }.get(level.strip().upper(), 'info')
+                Log.create({
+                    'iot_box_id': box.id,
+                    'event': 'error' if severity == 'error' else 'heartbeat',
+                    'message': (message or line)[:512],
+                    'ip_address': ip,
+                    'severity': severity,
+                })
+            return _json_response({'status': 'ok', 'accepted': len(lines)})
+        except Exception:
+            return _internal_error('IoT log collect failed')
+
+    @http.route(['/filamind_iot/keyboard_layouts', '/iot/keyboard_layouts'],
+                type='http', auth='public', methods=['POST'], csrf=False)
+    def keyboard_layouts(self, **post):
+        """The keyboard driver POSTs the X11 layouts available on the box.
+        Body is form-encoded `available_layouts=<json-list>`.
+        """
+        try:
+            raw = post.get('available_layouts') or '[]'
+            try:
+                layouts = json.loads(raw) if isinstance(raw, str) else raw
+            except ValueError:
+                return _json_response({'error': 'Invalid layout JSON'},
+                                       status=400)
+            Layout = request.env['iot.keyboard.layout'].sudo()
+            created = 0
+            for entry in layouts or []:
+                if not isinstance(entry, dict):
+                    continue
+                layout = (entry.get('layout') or '').strip()
+                variant = (entry.get('variant') or '').strip()
+                if not layout:
+                    continue
+                if Layout.search_count([('layout', '=', layout),
+                                        ('variant', '=', variant)]):
+                    continue
+                Layout.create({
+                    'layout': layout,
+                    'variant': variant,
+                    'language': entry.get('language') or layout,
+                })
+                created += 1
+            return _json_response({'status': 'ok', 'created': created})
+        except Exception:
+            return _internal_error('IoT keyboard_layouts failed')
+
+    @http.route(['/iot/box/<int:box_id>/display_url',
+                 '/filamind_iot/box/<int:box_id>/display_url'],
+                type='http', auth='public', methods=['GET'])
+    def display_url(self, box_id, **kwargs):
+        """Return per-display URLs for every display device on a box.
+
+        Response: {<device_identifier>: <url>, ...}
+
+        The box's display driver polls this every 60 s and refreshes the
+        kiosk browser when the URL changes.
+        """
+        try:
+            box = request.env['iot.box'].sudo().browse(box_id).exists()
+            if not box:
+                return _json_response({}, status=404)
+            urls = {
+                d.identifier: d.display_url or ''
+                for d in box.device_ids
+                if (d.type_id.code or '').lower() in ('display', 'customer_display')
+                   and d.display_url
+            }
+            return _json_response(urls)
+        except Exception:
+            return _internal_error('IoT display_url failed')
+
+    @http.route(['/filamind_iot/get_handlers', '/iot/get_handlers'],
+                type='http', auth='public', methods=['POST'], csrf=False)
+    def get_handlers(self, **post):
+        """Stub for the upstream box's `download_iot_handlers` flow.
+        Returns {not_modified: True} so the box keeps its bundled drivers
+        and doesn't try to fetch custom Python from us.
+
+        A future filamind addon may serve real custom handler bundles
+        here, gated by box.use_custom_handlers.
+        """
+        try:
+            return _json_response({'not_modified': True, 'handlers': {}})
+        except Exception:
+            return _internal_error('IoT get_handlers failed')
 
 
 def _box_default_name(identifier):
