@@ -164,23 +164,35 @@ Routes confirmed by direct HTTP probing of `payout.odoo.com`:
 
 For 100 % feature parity with Enterprise IoT, filamind-iot needs:
 
-1. **5 new addons:** `filamind_kitchen_display`, `filamind_quality_iot`,
-   `filamind_self_order_iot`, `filamind_event_iot`, `filamind_l10n_eg_iot`.
+1. **9 new addons:**
+   - `filamind_kitchen_display` (replaces `pos_restaurant_preparation_display` family)
+   - `filamind_quality_iot` (replaces `quality_iot` + `quality_control_iot`)
+   - `filamind_self_order_iot` (replaces `pos_self_order_iot` + KDS link)
+   - `filamind_event_iot` (replaces `event_iot` + `event_sale_iot` + `pos_event_iot`)
+   - `filamind_l10n_eg_iot` (replaces `l10n_eg_iot`)
+   - `filamind_pos_iot_six` (replaces `pos_iot_six` — driver already on the box)
+   - `filamind_pos_iot_worldline` (replaces `pos_iot_worldline` — driver already on the box)
+   - `filamind_pos_iot_adam_scale` (replaces `pos_iot_adam_scale` — small parser branch on the existing scale driver)
+   - `filamind_l10n_eu_iot_scale_cert` (replaces `l10n_eu_iot_scale_cert` — software side; LNE *certificate* itself is the customer's regulatory journey, not ours)
 2. **10 missing fields** added to existing models (see § 3).
 3. **4 missing HTTP endpoints** wired in.
 4. **2 missing models** added (`iot.channel` singleton, `iot.keyboard.layout`).
 5. **Multi-transport** (WS + LongPoll + ShortPoll) for proxy-portability.
 6. **Self-diagnose** on the box.
 
-What we will **not** build (vendor-locked or niche):
+> **Why we're now building all 16 instead of 12:** the four originally
+> shelved as "vendor-locked" (Six, Worldline, Adam, EU LNE) are all
+> achievable. The box image already ships LGPL-3 drivers for Six and
+> Worldline, the Worldline CTEP runtime ZIP is a public download, Adam
+> scales speak a Toledo-like serial protocol our existing driver almost
+> already handles, and the *software* part of LNE compliance (audit
+> trails, sealed config, hash-chained logs) is just code. The *legal*
+> certification itself remains a per-country regulatory process the
+> customer pursues — we provide the compliance scaffolding, they get
+> the certificate.
 
-- `pos_iot_six` / `pos_iot_worldline` / `pos_iot_adam_scale` — proprietary
-  payment terminals & specific scale brand. Customers using these stay on
-  Enterprise.
-- `l10n_eu_iot_scale_cert` — EU legal certification process is not a
-  software problem we can replicate.
-
-A detailed implementation plan lives in [ROADMAP.md](ROADMAP.md).
+A detailed implementation plan lives in [ROADMAP.md](ROADMAP.md) — now
+spanning 16 phases (~130 hours, ~4 weeks calendar).
 A protocol-level reference of how the box talks to the server lives in
 [ENTERPRISE_REFERENCE.md](ENTERPRISE_REFERENCE.md).
 The new Kitchen Display addon design lives in [KITCHEN_DISPLAY.md](KITCHEN_DISPLAY.md).

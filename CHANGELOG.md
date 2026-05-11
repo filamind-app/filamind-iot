@@ -6,6 +6,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Changed — roadmap scope expanded to 100 % parity (v0.3.3 docs)
+- Reclassified the four modules previously marked "out-of-scope":
+  * `pos_iot_six` — buildable, the LGPL Six driver already ships on
+    the IoT Box image.
+  * `pos_iot_worldline` — buildable, Worldline driver on the box +
+    CTEP runtime ZIP is a public download.
+  * `pos_iot_adam_scale` — buildable, ~3 hour parser branch on top of
+    the existing serial scale driver.
+  * `l10n_eu_iot_scale_cert` — the *software* (audit logs, hash-chain,
+    LNA logging) is buildable. The legal LNE certificate stays the
+    customer's regulatory journey.
+- ROADMAP.md gained Phases 12-15 covering the four addons. Total
+  effort estimate revised from ~100 h to ~130 h. Calendar from
+  ~3 weeks to ~4 weeks.
+- COMPARISON.md updated: the "What we will not build" section is
+  removed. New target = full coverage of all 20 Enterprise IoT
+  modules.
+
 ### Added — comprehensive documentation (v0.3.2)
 - `docs/COMPARISON.md` — feature matrix vs Odoo Enterprise IoT (20
   modules) and Community Edition. Compiled by introspecting a live

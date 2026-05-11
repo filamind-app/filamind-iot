@@ -247,14 +247,87 @@ transport is correct.
 
 ---
 
-## Phase 12 — Out-of-scope (will not build)
+## Phase 12 — `filamind_pos_iot_six` new addon (~10 h)
 
-| Module | Why not |
-|---|---|
-| `pos_iot_six` | Six payment terminal SDK is proprietary, NDA-bound. Customers using Six remain on Enterprise. |
-| `pos_iot_worldline` | Same — Worldline TIM SDK is proprietary. |
-| `pos_iot_adam_scale` | Adam Equipment-specific. Generic scale support already covers most cases. |
-| `l10n_eu_iot_scale_cert` | EU LNE certification is a legal/lab process, not a code problem. |
+**Goal:** Six payment terminal integration (Switzerland / EU CTEP-based).
+**Feasibility note:** the box already ships `six_driver.py` and
+`tim_interface.py` (LGPL-3, from upstream `iot_drivers`), so the SDK
+side is already on the Pi. We only need the server plumbing.
+
+| Task |
+|---|
+| `pos_iot_six.add_six_terminal` wizard (m2o → iot.box, terminal_device_id m2o → iot.device) — discovery + claiming flow |
+| `pos.payment.method` — when `iot_device_id.type == 'payment'` and the bound device is a Six terminal, route via this addon |
+| Push `iot_action {action: 'pay', amount, currency, reference}` and wait up to 120 s for a transaction-result message |
+| Capture transaction id + signature on response → save in `pos.payment` for audit |
+| Optional: cancel/refund flow (separate `iot_action`s) |
+
+**Acceptance:** ringing up a sale on POS with a Six terminal triggers
+the terminal screen, customer taps card, payment recorded automatically.
+
+---
+
+## Phase 13 — `filamind_pos_iot_worldline` new addon (~10 h)
+
+**Goal:** Worldline Yomani / VALINA payment terminal integration via the
+CTEP protocol.
+**Feasibility note:** the box has `worldline_driver_L.py` +
+`worldline_driver_W.py`. The CTEP runtime ZIP is hosted publicly at
+`https://download.odoo.com/master/posbox/iotbox/worldline-ctepv21_07.zip`
+— no Worldline contract needed to download.
+
+| Task |
+|---|
+| Same architecture as Phase 12 but CTEP semantics |
+| Mirror Worldline's required transaction fields (TLV codes) into `pos.payment` |
+| Configurable runtime ZIP URL (so customers can self-host the CTEP runtime if Odoo's mirror disappears) |
+| Periodic terminal heartbeat ping (separate from box heartbeat) |
+
+**Acceptance:** identical to Phase 12 with a real Worldline Yomani.
+
+---
+
+## Phase 14 — `filamind_pos_iot_adam_scale` new addon (~3 h)
+
+**Goal:** Adam Equipment scales (CBC, GBC, ABC series — popular in
+labs and meat counters).
+**Feasibility note:** Adam scales speak a serial protocol very close to
+the Toledo 8217 the existing `serial_scale_driver` already handles.
+Differences are in the framing bytes only.
+
+| Task |
+|---|
+| Add `_DRIVER_NAME = 'adam_equipment'` discriminator to the existing scale driver |
+| New parser branch for the Adam framing (`<CR>` instead of `<STX>`/`<ETX>` in some models) |
+| Auto-probe at connect: send `?` and match the model-id response |
+| Backend: nothing new — the device shows up as a normal `iot.device` of type `scale`, just with `manufacturer = 'Adam Equipment'` |
+
+**Acceptance:** an Adam ABC-100kg plugged into the box appears as a
+scale and reports weight on the regular `read_once` call.
+
+---
+
+## Phase 15 — `filamind_l10n_eu_iot_scale_cert` new addon (~6 h)
+
+**Goal:** European weights-and-measures legal-metrology compliance for
+trade scales (LNE / OIML R-76 audit logging).
+**Feasibility note:** the SOFTWARE bits — tamper-evident audit log,
+LNA event recording, sealed config check — are all just code we can
+write. Getting the **certificate** itself is a separate
+business/regulatory process the customer pursues with their national
+metrology institute (LNE in France, NMi in NL, etc.).
+
+| Task |
+|---|
+| `iot.scale.audit.log` model — append-only log of every weighing operation (weight, timestamp, user, transaction reference, hash chain) |
+| `pos.printer.iot_use_lna` (boolean) — when set, every receipt gets the audit-log reference printed |
+| Tamper detection: hash-chain validation on each new entry (broken chain → alert + lock the scale device) |
+| Daily cron exporting yesterday's log to PDF for archival |
+| README clearly states this is **compliance scaffolding** — the LNE certification itself is the customer's responsibility |
+
+**Acceptance:** every `read_once` from a scale of a `pos.config` with
+`use_iot_box = True` and `iot_scale_id` set creates an audit log row;
+modifying any past row triggers a tamper alert.
 
 ---
 
@@ -274,10 +347,14 @@ transport is correct.
 | 9 (Egypt fiscal) | 6 | 74.5 |
 | 10 (proxy docs) | 10 | 84.5 |
 | 11 (CI matrix) | 16 | 100.5 |
+| 12 (Six terminal) | 10 | 110.5 |
+| 13 (Worldline terminal) | 10 | 120.5 |
+| 14 (Adam scales) | 3 | 123.5 |
+| 15 (LNE compliance) | 6 | 129.5 |
 
-**~100 hours of focused work for full Enterprise-parity** (excluding the
-4 vendor-locked modules). At a single-developer pace with test cycles,
-plan for ~3 weeks calendar time.
+**~130 hours of focused work for 100 % Enterprise feature-parity.**
+At a single-developer pace with test cycles, plan for ~4 weeks calendar
+time.
 
 ---
 
@@ -291,8 +368,20 @@ v0.6.0 — Phase 5 (KDS) major release            week 2, days 3-5 + week 3 day 
 v0.7.0 — Phase 6 (Quality)                      week 3, days 2-3
 v0.8.0 — Phase 7 (Self-Order)                   week 3, day 4
 v0.9.0 — Phase 8 + 9 + 10 + 11                  week 3 day 5
-v1.0.0 — full parity, polished docs             week 4
+v1.0.0 — Phase 12 + 13 (payment terminals)      week 4, days 1-3
+v1.1.0 — Phase 14 + 15 (Adam + LNE compliance)  week 4, days 4-5
 ```
 
 Every release MUST land with a green CI matrix and an updated
 `CHANGELOG.md`.
+
+---
+
+## Vendor & legal notes
+
+| Phase | External dependency | Risk |
+|---|---|---|
+| 12 (Six) | Box-side `six_driver.py` is upstream LGPL-3 | low — already shipping |
+| 13 (Worldline) | CTEP runtime ZIP from `download.odoo.com` | medium — Odoo could remove it. Mitigation: customers can self-host the ZIP and configure the URL |
+| 14 (Adam) | None — pure protocol parsing | low |
+| 15 (LNE) | LNE certification itself, per country | n/a — out of our scope by design; we ship the *audit code*, the customer pursues the certificate |
