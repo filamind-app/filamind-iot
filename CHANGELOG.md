@@ -6,6 +6,47 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Fixed — Phase 22b: filamind_mrp_iot view rejected by 19.0 view validator
+
+> Third Odoo CI install attempt revealed a view-side bug surfaced
+> by 19.0's stricter validator:
+>
+>     field "active_id" does not exist in model "mrp.workcenter"
+>
+> The `trigger_ids` inline list on the workcenter form passed
+> `default_workcenter_id: active_id` in its context, but
+> `active_id` is only auto-injected by Odoo when navigating
+> from a parent view — not when the workcenter form is opened
+> standalone. Replace with `id` (the workcenter's own primary
+> key, which is always present in field-context evaluation).
+
+### Added — Phase 22: docs sweep (INSTALL, HARDWARE, SECURITY, MIGRATION)
+
+> Four new top-level documents covering the operational basics
+> that admins, integrators, and security reviewers ask about
+> before adopting filamind in production.
+
+- `docs/INSTALL.md` — Odoo addon-path setup, the 14-addon
+  installation matrix (which deps each pulls), three box
+  install paths (pre-built `.img`, `flash-patches.sh`,
+  build-your-own), first-boot pairing, post-install
+  verification (SQL probe + `filamind-status`).
+- `docs/HARDWARE.md` — compatibility matrix of every device
+  category we support (printers, label printers, scanners,
+  scales, payment terminals, EG fiscal, displays, drawers,
+  cameras), with explicit ✅/⏳/🚧/❌ status legend. **A device
+  appears here only if real hardware has been observed
+  working** — no inferences from datasheets.
+- `docs/SECURITY.md` — threat model + token issuance / rotation
+  / validation, transport security, **PCI-DSS scope** (the full
+  PAN is NEVER stored — only `card_last4` + EMV fields), and
+  recommended hardening for server, box, and DB.
+- `docs/MIGRATION.md` — step-by-step from the OEEL-1 Odoo
+  Enterprise IoT stack to filamind, including the
+  field-name-compatibility table (most fields kept identical
+  on purpose), the rollback plan, and common gotchas (KDS
+  data-model differences, `quality_control` re-implementation).
+
 ### Added — Phase 21: hardware-in-the-loop test scripts (mock devices)
 
 > Mock devices so contributors can exercise the full

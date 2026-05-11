@@ -27,7 +27,7 @@
                        name="filamind_iot_triggers"
                        invisible="not iot_box_id">
                     <field name="trigger_ids" nolabel="1"
-                           context="{'default_workcenter_id': active_id}">
+                           context="{'default_workcenter_id': id}">
                         <list editable="bottom">
                             <field name="sequence" widget="handle"/>
                             <field name="device_id"
