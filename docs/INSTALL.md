@@ -59,6 +59,58 @@ behind any reverse proxy. Restart Odoo:
 sudo systemctl restart odoo
 ```
 
+### Upgrading from a previous version
+
+**Important:** copying the new addon files alone is not enough —
+Odoo needs `-u <module>` to apply schema migrations and reload
+model definitions. Skipping this step gives you `500 Internal
+Server Error` until you do it.
+
+For dockerised setups (the deltafabs.com layout — Odoo container
+named `odoo-web`, Postgres `odoo-db`), there's a one-step helper
+that handles the whole flow (backup → download zip → unzip →
+chown → autodetect DB → run `-u` → restart container):
+
+```bash
+sudo curl -fsSL https://raw.githubusercontent.com/filamind-app/filamind-iot/v1.1.0/tools/upgrade.sh -o /tmp/filamind-upgrade.sh
+sudo bash /tmp/filamind-upgrade.sh 1.1.0
+```
+
+Override the defaults via env vars if your layout differs:
+
+```bash
+sudo VERSION=1.1.0 \
+     ADDONS_HOST=/path/to/custom_addons \
+     ODOO_CONTAINER=my-odoo \
+     DB_HOST=my-postgres \
+     DB_PASSWORD='secret' \
+     bash /tmp/filamind-upgrade.sh
+```
+
+For a manual upgrade flow (any layout):
+
+```bash
+# 1. Backup current addons
+cp -a /opt/odoo/custom-addons/filamind-iot/addons \
+      /opt/odoo/custom-addons/filamind-iot/addons.backup-$(date +%s)
+
+# 2. Replace with the new release
+curl -fsSLO https://github.com/filamind-app/filamind-iot/releases/download/v1.1.0/filamind-iot-v1.1.0.zip
+unzip -o filamind-iot-v1.1.0.zip -d /opt/odoo/custom-addons/filamind-iot/
+
+# 3. Run -u from the Odoo CLI (substitute the right modules + DB)
+odoo -c /etc/odoo/odoo.conf \
+     -d <db_name> \
+     -u filamind_iot,filamind_pos_iot,filamind_stock_iot,filamind_mrp_iot \
+     --stop-after-init
+
+# 4. Restart Odoo
+sudo systemctl restart odoo
+```
+
+Or, less safe but fastest from the UI: **Apps → Update Apps List
+→ Upgrade** on each installed filamind module.
+
 ### Install the umbrella from the Apps screen
 
 1. Log in as admin → **Apps**.

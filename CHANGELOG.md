@@ -6,6 +6,39 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added — `tools/upgrade.sh` one-step upgrade helper
+
+> Surfaced by a real upgrade against the deltafabs.com production
+> server: copying new addon files alone leaves Odoo serving 500s
+> until an admin runs `odoo -u <module>` to apply schema migrations.
+> The new helper handles the whole flow safely.
+
+- `tools/upgrade.sh <version>` — for the common dockerised layout
+  (Odoo container `odoo-web`, Postgres `odoo-db`):
+  1. Timestamped backup of every currently-installed `filamind_*`
+     directory under `${ADDONS_HOST}/../filamind-upgrade-backups/`.
+  2. Downloads `filamind-iot-v<version>.zip` from GitHub releases
+     and verifies the SHA-256 sidecar.
+  3. Unzips into `ADDONS_HOST` and chowns to match an existing
+     addon's owner. **Uses the `filamind_*` glob** (with
+     underscore) — `filamind*` would also match the unrelated
+     3D-printer `filamind/` directory on the same server.
+  4. Auto-detects every Postgres DB that has `filamind_iot`
+     installed.
+  5. Runs `docker exec ${ODOO_CONTAINER} odoo -d <db> -u <list>
+     --stop-after-init --no-http --workers=0` per DB to apply
+     schema migrations.
+  6. Restarts the Odoo container so live workers pick up the new
+     model definitions.
+  7. Prints the rollback command (`rm -rf` + `cp -a` from the
+     timestamped backup).
+- All paths overridable via env vars (`ADDONS_HOST`,
+  `ODOO_CONTAINER`, `DB_HOST`, `DB_USER`, `DB_PASSWORD`,
+  `DB_NAME`, `BACKUP_ROOT`, `GH_REPO`).
+- `docs/INSTALL.md` now documents three upgrade flows: the helper
+  (recommended), a manual CLI flow (any layout), and the
+  Apps-screen "Upgrade" button (less safe — bypasses backup).
+
 ### Removed / replaced — drop Docker, ship addons-zip on release
 
 > Course correction: filamind-iot is an **Odoo addon suite**, not
