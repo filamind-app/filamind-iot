@@ -11,3 +11,6 @@ select = ["E", "F", "W", "B"]
 "__init__.py" = ["F401"]
 # Odoo __manifest__.py files are bare dict literals — that's the API contract.
 "__manifest__.py" = ["B018"]
+# Inline JS/HTML templates (kitchen_controller renders the public KDS
+# tablet page) cannot meaningfully wrap.
+"**/kitchen_controller.py" = ["E501"]

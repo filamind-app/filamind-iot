@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_kitchen_display_list" model="ir.ui.view">
+        <field name="name">filamind.kitchen.display.list</field>
+        <field name="model">filamind.kitchen.display</field>
+        <field name="arch" type="xml">
+            <list string="Kitchen Displays">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="pos_config_ids" widget="many2many_tags" optional="show"/>
+                <field name="order_count" optional="show"/>
+                <field name="average_time_seconds" optional="hide"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_kitchen_display_form" model="ir.ui.view">
+        <field name="name">filamind.kitchen.display.form</field>
+        <field name="model">filamind.kitchen.display</field>
+        <field name="arch" type="xml">
+            <form string="Kitchen Display">
+                <header>
+                    <button name="action_open_public" type="object"
+                            string="Open Tablet View"
+                            class="btn-primary" icon="fa-external-link"/>
+                    <button name="action_rotate_token" type="object"
+                            string="Rotate Token"
+                            class="btn-secondary" icon="fa-refresh"
+                            confirm="This will revoke any open tablet sessions. Continue?"/>
+                    <button name="action_clear_served" type="object"
+                            string="Clear Served"
+                            class="btn-secondary" icon="fa-trash"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="e.g. Hot Kitchen #1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Source">
+                            <field name="pos_config_ids" widget="many2many_tags"
+                                   options="{'no_create': True}"/>
+                            <field name="category_ids" widget="many2many_tags"
+                                   options="{'no_create': True}"
+                                   placeholder="Empty = receive all categories"/>
+                        </group>
+                        <group string="Auto-clear">
+                            <field name="auto_clear"/>
+                            <field name="clear_after_seconds"
+                                   readonly="not auto_clear"/>
+                            <field name="company_id"
+                                   groups="base.group_multi_company"/>
+                            <field name="color" widget="color_picker"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group string="Public Access">
+                        <field name="public_url" widget="url" readonly="1"/>
+                        <field name="access_token" readonly="1"
+                               groups="base.group_system"/>
+                    </group>
+                    <notebook>
+                        <page string="Stages" name="stages">
+                            <field name="stage_ids" nolabel="1">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="color" widget="color_picker"/>
+                                    <field name="is_initial" widget="boolean_toggle"/>
+                                    <field name="is_final" widget="boolean_toggle"/>
+                                    <field name="auto_advance_seconds"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Stats" name="stats">
+                            <group>
+                                <field name="order_count" readonly="1"/>
+                                <field name="average_time_seconds" readonly="1"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_kitchen_display" model="ir.actions.act_window">
+        <field name="name">Kitchen Displays</field>
+        <field name="res_model">filamind.kitchen.display</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Add a Kitchen Display
+            </p>
+            <p>
+                Each row is a tablet in your kitchen. Bookmark its public URL on
+                the tablet, then link the display to one or more POS
+                configurations.
+            </p>
+        </field>
+    </record>
+
+</odoo>

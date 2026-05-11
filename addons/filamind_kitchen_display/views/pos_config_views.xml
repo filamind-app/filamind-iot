@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_pos_config_form_kitchen" model="ir.ui.view">
+        <field name="name">pos.config.form.kitchen</field>
+        <field name="model">pos.config</field>
+        <field name="inherit_id" ref="point_of_sale.pos_config_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="Kitchen Displays (filamind)" name="filamind_kds_group">
+                    <field name="filamind_kitchen_display_ids"
+                           widget="many2many_tags"
+                           options="{'no_create': True}"
+                           help="Orders paid on this POS appear on every linked display."/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

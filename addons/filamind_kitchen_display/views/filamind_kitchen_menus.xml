@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem id="menu_kitchen_display_root"
+              name="Kitchen Displays"
+              parent="point_of_sale.pos_menu_root"
+              sequence="50"/>
+
+    <menuitem id="menu_kitchen_display_list"
+              parent="menu_kitchen_display_root"
+              action="action_kitchen_display"
+              sequence="10"/>
+
+    <menuitem id="menu_kitchen_order_list"
+              parent="menu_kitchen_display_root"
+              action="action_kitchen_order"
+              sequence="20"/>
+
+</odoo>

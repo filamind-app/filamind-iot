@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_kitchen_order_list" model="ir.ui.view">
+        <field name="name">filamind.kitchen.order.list</field>
+        <field name="model">filamind.kitchen.order</field>
+        <field name="arch" type="xml">
+            <list string="Kitchen Orders" create="false">
+                <field name="create_date"/>
+                <field name="display_id"/>
+                <field name="pos_order_id"/>
+                <field name="table_number"/>
+                <field name="stage_id"/>
+                <field name="completion_seconds" optional="show"/>
+                <field name="customer_note" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_kitchen_order_form" model="ir.ui.view">
+        <field name="name">filamind.kitchen.order.form</field>
+        <field name="model">filamind.kitchen.order</field>
+        <field name="arch" type="xml">
+            <form string="Kitchen Order" create="false">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="display_id" readonly="1"/>
+                            <field name="pos_order_id" readonly="1"/>
+                            <field name="stage_id"/>
+                        </group>
+                        <group>
+                            <field name="table_number" readonly="1"/>
+                            <field name="fired_date" readonly="1"/>
+                            <field name="completed_date" readonly="1"/>
+                            <field name="completion_seconds" readonly="1"/>
+                        </group>
+                    </group>
+                    <field name="customer_note" placeholder="Customer note (read-only)"
+                           readonly="1"/>
+                    <field name="internal_note" placeholder="Internal kitchen note"/>
+                    <notebook>
+                        <page string="Lines" name="lines">
+                            <field name="line_ids" readonly="1">
+                                <list>
+                                    <field name="product_id"/>
+                                    <field name="qty"/>
+                                    <field name="note"/>
+                                    <field name="state"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_kitchen_order_search" model="ir.ui.view">
+        <field name="name">filamind.kitchen.order.search</field>
+        <field name="model">filamind.kitchen.order</field>
+        <field name="arch" type="xml">
+            <search string="Kitchen Orders">
+                <field name="display_id"/>
+                <field name="pos_order_id"/>
+                <field name="stage_id"/>
+                <filter string="Today" name="today"
+                        domain="[('create_date', '>=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter string="Pending" name="pending"
+                        domain="[('completed_date', '=', False)]"/>
+                <filter string="Completed" name="done"
+                        domain="[('completed_date', '!=', False)]"/>
+                <filter string="Group by Display" name="group_display"
+                        context="{'group_by': 'display_id'}"/>
+                <filter string="Group by Stage" name="group_stage"
+                        context="{'group_by': 'stage_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_kitchen_order" model="ir.actions.act_window">
+        <field name="name">Kitchen Orders</field>
+        <field name="res_model">filamind.kitchen.order</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_kitchen_order_search"/>
+        <field name="context">{'search_default_today': 1}</field>
+    </record>
+
+</odoo>

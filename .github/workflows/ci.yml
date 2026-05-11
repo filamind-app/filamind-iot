@@ -9,7 +9,7 @@ on:
 
 env:
   ADDONS_DIR: addons
-  ADDONS: filamind_iot filamind_pos_iot filamind_stock_iot filamind_mrp_iot
+  ADDONS: filamind_iot filamind_pos_iot filamind_stock_iot filamind_mrp_iot filamind_kitchen_display
 
 jobs:
   lint-python:

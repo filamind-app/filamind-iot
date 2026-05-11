@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_kitchen_display_user,filamind.kitchen.display user,model_filamind_kitchen_display,base.group_user,1,1,1,0
+access_kitchen_display_admin,filamind.kitchen.display admin,model_filamind_kitchen_display,base.group_system,1,1,1,1
+access_kitchen_stage_user,filamind.kitchen.stage user,model_filamind_kitchen_stage,base.group_user,1,1,1,1
+access_kitchen_order_user,filamind.kitchen.order user,model_filamind_kitchen_order,base.group_user,1,1,1,0
+access_kitchen_order_admin,filamind.kitchen.order admin,model_filamind_kitchen_order,base.group_system,1,1,1,1
+access_kitchen_line_user,filamind.kitchen.line user,model_filamind_kitchen_line,base.group_user,1,1,1,1

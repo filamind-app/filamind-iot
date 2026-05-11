@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Auto-clear served orders past clear_after_seconds -->
+    <record id="cron_kitchen_auto_clear" model="ir.cron">
+        <field name="name">Kitchen Display: auto-clear served orders</field>
+        <field name="model_id" ref="model_filamind_kitchen_display"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_auto_clear()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">minutes</field>
+        <field name="active" eval="True"/>
+    </record>
+
+    <!-- Auto-advance orders past their stage's auto_advance_seconds -->
+    <record id="cron_kitchen_auto_advance" model="ir.cron">
+        <field name="name">Kitchen Display: auto-advance orders</field>
+        <field name="model_id" ref="model_filamind_kitchen_order"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_auto_advance()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">minutes</field>
+        <field name="active" eval="True"/>
+    </record>
+
+</odoo>

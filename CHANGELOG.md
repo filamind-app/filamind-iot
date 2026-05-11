@@ -6,6 +6,49 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added — Phase 5: filamind_kitchen_display new addon (v0.1.0)
+
+> Roadmap Phase 5 of 16. Tablet-friendly Kitchen Display System for
+> restaurants — community alternative to Enterprise's
+> `pos_restaurant_preparation_display` family.
+
+**Models**
+- `filamind.kitchen.display` — one row per tablet. Has `name`,
+  `pos_config_ids` (m2m), `category_ids` (m2m filter),
+  `auto_clear` + `clear_after_seconds`, `access_token` (URL auth),
+  `public_url` (computed), and stat counters.
+- `filamind.kitchen.stage` — workflow columns (default 3 created
+  automatically: In Progress / Ready / Served).
+- `filamind.kitchen.order` — one ticket per pos.order, links via
+  `pos_order_id`, tracks `fired_date` / `completed_date` /
+  `completion_seconds`.
+- `filamind.kitchen.line` — line items (product, qty, note, state).
+- `pos.config.filamind_kitchen_display_ids` (m2m) — bind a POS to
+  one or more displays.
+
+**Public route**
+- `GET /filamind_kitchen/<id>?access_token=…` — vanilla-JS tablet
+  page that polls every 5 s. (Proper OWL frontend in v0.2.0.)
+- `GET /filamind_kitchen/<id>/orders?access_token=…` — JSON feed.
+- `POST /filamind_kitchen/transition` — stage move with token check.
+
+**Hooks**
+- `pos.order.action_pos_order_paid` extended to materialise
+  kitchen.order rows on every linked display, filtered by
+  category_ids if set, and pushes a `bus.bus` event for the OWL
+  frontend.
+
+**Crons**
+- `_cron_auto_clear` — drops served orders past `clear_after_seconds`.
+- `_cron_auto_advance` — moves orders to next stage if
+  `auto_advance_seconds` set.
+
+**UI**
+- Backend list/form/search for displays + orders.
+- Menu under `POS → Kitchen Displays`.
+- "Open Tablet View" + "Rotate Token" + "Clear Served" buttons.
+- Inline CSS for the public page (dark theme, kanban columns).
+
 ### Added — Phase 4: Missing field extensions on existing addons
 
 > Roadmap Phase 4 of 16. Brings the three existing business addons in
