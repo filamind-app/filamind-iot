@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_pos_config_form_self_order_iot" model="ir.ui.view">
+        <field name="name">pos.config.form.self_order_iot</field>
+        <field name="model">pos.config</field>
+        <field name="inherit_id" ref="point_of_sale.pos_config_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="Self-Order IoT (filamind)"
+                       name="filamind_self_order_iot_group">
+                    <field name="self_order_iot_box_id"
+                           options="{'no_create': True}"/>
+                    <field name="self_order_iot_printer_id"
+                           readonly="not self_order_iot_box_id"
+                           options="{'no_create': True}"/>
+                    <field name="self_order_iot_terminal_id"
+                           readonly="not self_order_iot_box_id"
+                           options="{'no_create': True}"/>
+                    <field name="self_ordering_iot_available_iot_box_ids"
+                           widget="many2many_tags" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

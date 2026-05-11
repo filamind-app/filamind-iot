@@ -6,6 +6,27 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added — Phase 7: filamind_self_order_iot new addon (v0.1.0)
+
+> Roadmap Phase 7 of 16. Bridges the LGPL `pos_self_order` kiosk
+> module with the filamind IoT gateway. Community alternative to
+> Enterprise `pos_self_order_iot` (OEEL-1).
+
+- `pos.config.self_order_iot_box_id` — IoT Box dedicated to the kiosk
+  (independent of the cashier-side iot_box_id), filtered by
+  `iot.box.can_be_kiosk = True`.
+- `pos.config.self_order_iot_printer_id` — printer for the kiosk's
+  customer-confirmation ticket.
+- `pos.config.self_order_iot_terminal_id` — payment terminal exposed
+  at the kiosk.
+- `pos.config.self_ordering_iot_available_iot_box_ids` (computed o2m)
+  — Enterprise-parity helper field for cross-import compatibility.
+- Hook on `pos.order.action_pos_order_paid`: if the order is a
+  self-order and the config has `self_order_iot_printer_id` set, push
+  a confirmation ticket via `iot.box.send_bus_message`. Plain-text
+  template; override `_render_kiosk_ticket` for ESC/POS or branded
+  layouts.
+
 ### Added — Phase 6: filamind_quality_iot new addon (v0.1.0)
 
 > Roadmap Phase 6 of 16. Quality control with IoT-driven
