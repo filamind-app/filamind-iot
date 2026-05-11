@@ -282,12 +282,26 @@ find addons -name '*.xml' -print0 | while IFS= read -r -d '' f; do
 done
 ```
 
-### Run inside a fresh Odoo
+### Smoke-test against a real Odoo
+
+If you already have an Odoo 19 dev environment, just point its
+`addons_path` at this repo's `addons/` and install
+`filamind_iot_full` from the Apps screen.
+
+For a one-off install check from the CLI:
 
 ```bash
-docker run -p 8069:8069 -v $(pwd)/addons:/mnt/extra-addons \
-    odoo:19 -- -d filamind_test -i filamind_iot --stop-after-init
+odoo -c odoo.conf -d filamind_test \
+     -i filamind_iot_full \
+     --stop-after-init
 ```
+
+(Prepend the repo's `addons/` to `addons_path` in your `odoo.conf`
+first.)
+
+The CI workflow `.github/workflows/odoo-integration.yml` runs the
+same install against a clean Odoo 19.0 + Postgres 16 on every
+push to main and every PR labelled `odoo-integration`.
 
 ---
 

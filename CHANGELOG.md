@@ -6,6 +6,34 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Removed / replaced — drop Docker, ship addons-zip on release
+
+> Course correction: filamind-iot is an **Odoo addon suite**, not
+> a server. Ship it the way every other Odoo addon is shipped —
+> drop the addons folder into a target Odoo's `addons_path`. The
+> Docker image was redundant for any user who already has Odoo
+> running, and confusing about the product's positioning.
+
+**Removed:**
+- `Dockerfile`, `docker-compose.yml`, `docker/` directory.
+- `.github/workflows/release-docker.yml` (the GHCR multi-arch
+  build).
+
+**Added:**
+- `.github/workflows/release-addons-zip.yml` — on every `v*.*.*`
+  tag (or per-addon `<addon>/v*.*.*` tag), packs the relevant
+  addon directory(ies) into a deterministic, sorted,
+  pycache-stripped zip + a `.sha256` sidecar, and attaches both
+  to the GitHub Release.
+- `docs/INSTALL.md` updated: Method A is now the release-zip
+  download (`curl + sha256sum -c + unzip into addons_path`);
+  Method B remains `git clone` for tracking-main use.
+- README's "Run inside a fresh Odoo" Docker snippet replaced
+  with the `odoo -i filamind_iot_full` CLI smoke-test against a
+  pre-existing Odoo install.
+- "Containers" guidance in INSTALL.md is now generic — works
+  with any Odoo 19 image, not an opinionated bundled one.
+
 ### Added — Phase 24: production hardening (health + Prometheus) + view-button fix
 
 > Operational endpoints for monitoring tools, plus a fix for the
