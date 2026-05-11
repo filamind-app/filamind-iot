@@ -6,6 +6,29 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added — Phase 16: filamind_iot_full umbrella + README sweep (v0.1.0)
+
+> Roadmap Phase 16 of 16 — closing milestone. Full Enterprise-parity
+> stack now installs in a single click from the Apps screen.
+
+- New addon `filamind_iot_full` — umbrella meta-addon, depends on
+  every other filamind addon, ships no models or views of its own,
+  marked `application=True` so it appears in the Apps screen.
+- README.md rewritten:
+    - Replaces the old "four addons" table with the full 14-addon
+      catalog (core + business + localization + vendor-specific +
+      umbrella).
+    - Adds a dependency tree diagram covering the new addons.
+    - Points to `docs/REVERSE_PROXY_PLATFORMS.md` and the proxy-
+      matrix CI workflow.
+    - Updates the docs index to mark the 16-phase roadmap complete.
+
+**The 13-addon LGPL-3 stack now covers feature-equivalent ground
+to all the OEEL-1 Enterprise IoT modules**: core, POS device
+wiring, inventory, manufacturing, KDS, quality control,
+self-order/kiosk, events, EG fiscal, EU MID/LNE certification,
+Six payment, Worldline payment, and Adam scales.
+
 ### Added — Phase 15: filamind_l10n_eu_iot_scale_cert new addon (v0.1.0)
 
 > Roadmap Phase 15 of 16 (Phase 16 is the umbrella sweep). EU

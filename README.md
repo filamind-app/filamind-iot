@@ -18,39 +18,82 @@ involved, no Enterprise subscription required.
 - **[docs/ENTERPRISE_REFERENCE.md](docs/ENTERPRISE_REFERENCE.md)** —
   protocol & schema reference: every model, field, route, bus channel
   the upstream IoT Box actually talks to.
-- **[docs/ROADMAP.md](docs/ROADMAP.md)** — 12-phase plan to reach 95 %
-  Enterprise feature-parity (~100 hours of work, 4-week calendar).
+- **[docs/ROADMAP.md](docs/ROADMAP.md)** — 16-phase plan to reach
+  Enterprise feature-parity (now complete through Phase 16).
 - **[docs/KITCHEN_DISPLAY.md](docs/KITCHEN_DISPLAY.md)** — design for the
-  upcoming `filamind_kitchen_display` addon (replaces the Enterprise
+  `filamind_kitchen_display` addon (replaces Enterprise
   `pos_restaurant_preparation_display`).
+- **[docs/REVERSE_PROXY_PLATFORMS.md](docs/REVERSE_PROXY_PLATFORMS.md)**
+  — copy-paste recipe for nginx, Caddy, Apache, Traefik, HAProxy,
+  OpenLiteSpeed/CyberPanel, aaPanel, Plesk, cPanel, IIS, Cloudflare,
+  and bare systemd. Each commit that touches the recipe runs them in
+  CI — see `.github/workflows/proxy-matrix.yml`.
 
 ---
 
-## The four addons
+## The 14 addons
 
-This monorepo ships four sibling Odoo addons. Install only what you need.
+This monorepo ships 14 sibling Odoo addons. Install whichever subset you
+need, or install the **`filamind_iot_full`** umbrella to get all of them
+in one click.
+
+### Core + business addons
 
 | Addon | Depends on | Purpose |
 |---|---|---|
-| **`filamind_iot`** | base, mail, web, bus | Core: box+device+command models, `/iot/setup`, `/iot/box/*` HTTP endpoints, bus-based bidirectional flow, pairing wizard |
+| **`filamind_iot`** | base, mail, web, bus | Core: box+device+command models, `/iot/setup`, `/iot/box/*` HTTP endpoints, bus-based bidirectional flow, pairing wizard, three transports (WebSocket / long-poll / short-poll) |
 | **`filamind_pos_iot`** | filamind_iot, point_of_sale | Per-pos.config IoT device fields (printer, scale, scanner, customer display, cash drawer), payment-terminal binding, server-side receipt printing |
 | **`filamind_stock_iot`** | filamind_iot, stock | Per-warehouse defaults (label printer, scale, scanner), `print_iot_label` and `iot_weigh` actions on stock.picking |
 | **`filamind_mrp_iot`** | filamind_iot, mrp | Per-workcenter defaults (label printer, caliper, scanner), capture measurement + print label actions on mrp.workorder |
+| **`filamind_kitchen_display`** | filamind_iot, point_of_sale | Kitchen Display System — public OWL frontend at `/filamind_kitchen/<id>?access_token=…`, drag-between-stages workflow, bus-based push of new orders |
+| **`filamind_quality_iot`** | filamind_iot, point_of_sale | Quality control with IoT-driven measurements. Re-implements `quality_control` from scratch (Enterprise-only) so it works on a vanilla Community Odoo |
+| **`filamind_self_order_iot`** | filamind_pos_iot, pos_self_order | Kiosk-side IoT — per-config dedicated IoT box, kiosk printer, kiosk payment terminal, confirmation-ticket dispatch on self-order payment |
+| **`filamind_event_iot`** | filamind_iot, event | Event registration: auto-print attendee badge on confirmation, manual reprint, scanner-driven check-in |
+
+### Localization addons
+
+| Addon | Depends on | Purpose |
+|---|---|---|
+| **`filamind_l10n_eg_iot`** | filamind_pos_iot, l10n_eg | Egyptian Tax Authority (ETA) hardware-fiscal-printer routing + UUID/QR signature capture |
+| **`filamind_l10n_eu_iot_scale_cert`** | filamind_pos_iot | EU MID / LNE certification metadata + audit log for legal-for-trade scales (notified body, certificate expiry, weight-event log, daily expiry warning cron) |
+
+### Vendor-specific terminal / scale addons
+
+| Addon | Depends on | Purpose |
+|---|---|---|
+| **`filamind_pos_iot_six`** | filamind_pos_iot | Six (TIM Cloud / TIM Direct) payment terminal config + transaction-response capture |
+| **`filamind_pos_iot_worldline`** | filamind_pos_iot | Worldline (CTEP / Sips-Sherlocks) payment terminal config + EMV TVR/TSI capture for chargeback defense |
+| **`filamind_pos_iot_adam_scale`** | filamind_pos_iot | Adam Equipment scale (CPWplus, GFK, GBK, GFC, GBC) config + Zero/Tare buttons + capacity-overflow warnings |
+
+### Umbrella
+
+| Addon | Depends on | Purpose |
+|---|---|---|
+| **`filamind_iot_full`** | *every addon above* | One-click meta-install for production deployments. Marks itself `application=True` so it shows in the Apps screen |
 
 ```
-            ┌─────────────────────────┐
-            │     filamind_iot        │  ← core (box, device, bus, queue)
-            └────────────┬────────────┘
-                         │ extended by
-            ┌────────────┼────────────┐
-            ▼            ▼            ▼
-   filamind_pos_iot  filamind_stock_iot  filamind_mrp_iot
-        (POS)          (Inventory)       (Manufacturing)
+                ┌──────────────────────┐
+                │     filamind_iot     │  ← core (box, device, bus, queue)
+                └──────────┬───────────┘
+                           │ extended by
+            ┌──────────────┼──────────────┐
+            ▼              ▼              ▼
+       filamind_pos_iot  …_stock_iot   …_mrp_iot
+            │
+            ├── filamind_self_order_iot
+            ├── filamind_l10n_eg_iot
+            ├── filamind_l10n_eu_iot_scale_cert
+            ├── filamind_pos_iot_six
+            ├── filamind_pos_iot_worldline
+            └── filamind_pos_iot_adam_scale
+
+            (other top-level: filamind_kitchen_display, filamind_quality_iot,
+             filamind_event_iot, filamind_iot_full)
 ```
 
 Every business addon adds Many2one fields to its core record (`pos.config`,
-`stock.warehouse`, `mrp.workcenter`) and exposes test buttons that call into
-`iot.box.send_bus_message(method, payload, device, timeout)` from the
+`stock.warehouse`, `mrp.workcenter`, …) and exposes test buttons that call
+into `iot.box.send_bus_message(method, payload, device, timeout)` from the
 `filamind_iot` core.
 
 ---
