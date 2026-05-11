@@ -6,6 +6,32 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added — Phase 21: hardware-in-the-loop test scripts (mock devices)
+
+> Mock devices so contributors can exercise the full
+> server → bus → box-driver round-trip without owning real
+> scales / payment terminals / fiscal printers.
+
+- `tests/hil/mock_adam_scale.py` — opens a Linux pty and answers
+  AGN protocol (`Z` zero, `T` tare, `P` poll). Configurable
+  starting weight + unit. Smoke-tested locally — sending `P\r`
+  returns the canonical `  +2.500 kg\r\n` framing.
+- `tests/hil/mock_payment_terminal.py --vendor six|worldline` —
+  opens either a Linux pty (TIM Direct / CTEP) or an HTTP
+  listener (TIM Cloud / cless_evo). Returns a configurable
+  approved/declined/error response with EMV TVR/TSI fields.
+- `tests/hil/mock_eg_fiscal_printer.py` — opens a pty and
+  answers the four ESC sequences our `filamind_eg_fiscal_driver`
+  uses (`ESC i` begin, `ESC I` end+sign, `ESC ? u` query UUID,
+  `ESC ? q` query QR). Auto-increments mock UUIDs.
+- `tests/hil/README.md` — wiring diagram (server → bus → box →
+  driver → mock → response → command queue) and explicit notes
+  on what the mocks **do not** validate (CRC/LRC, vendor-timing
+  rules, PCI-DSS edge cases).
+
+The mocks have **no Odoo dependency**, work standalone, and run
+on any Linux/WSL2 box. Windows hosts run them via WSL2.
+
 ### Changed — Phase 19: filamind_kitchen_display live frontend (v0.2.0)
 
 > Replaces the v0.1.0 vanilla-JS / 5-second-poller with a real
