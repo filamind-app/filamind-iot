@@ -2,11 +2,27 @@
 
 Self-hosted **IoT gateway suite for Odoo 19**, designed to pair with the
 [**filamind-iotbox**](https://github.com/filamind-app/filamind-iotbox)
-Raspberry Pi image. An independent alternative to Odoo Enterprise's stock
-`iot`, `pos_iot`, etc. — no `iot-proxy.odoo.com` involved.
+Raspberry Pi image. An independent **LGPL-3 alternative** to Odoo Enterprise's
+20-module IoT stack (which is OEEL-1 / paid-only) — no `iot-proxy.odoo.com`
+involved, no Enterprise subscription required.
 
 > Built on top of, but independent of, Odoo. Released under LGPL-3 to match
-> upstream Odoo's license.
+> upstream Odoo's [`iot_drivers`](https://github.com/odoo/odoo/tree/master/addons/iot_drivers)
+> licence (which runs on the IoT Box itself).
+
+## 📚 Documentation
+
+- **[docs/COMPARISON.md](docs/COMPARISON.md)** — feature matrix:
+  Community vs Enterprise vs filamind-iot (after introspecting a live
+  Odoo Enterprise SaaS DB).
+- **[docs/ENTERPRISE_REFERENCE.md](docs/ENTERPRISE_REFERENCE.md)** —
+  protocol & schema reference: every model, field, route, bus channel
+  the upstream IoT Box actually talks to.
+- **[docs/ROADMAP.md](docs/ROADMAP.md)** — 12-phase plan to reach 95 %
+  Enterprise feature-parity (~100 hours of work, 4-week calendar).
+- **[docs/KITCHEN_DISPLAY.md](docs/KITCHEN_DISPLAY.md)** — design for the
+  upcoming `filamind_kitchen_display` addon (replaces the Enterprise
+  `pos_restaurant_preparation_display`).
 
 ---
 

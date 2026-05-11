@@ -6,6 +6,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/) and
 
 ## [Unreleased]
 
+### Added — comprehensive documentation (v0.3.2)
+- `docs/COMPARISON.md` — feature matrix vs Odoo Enterprise IoT (20
+  modules) and Community Edition. Compiled by introspecting a live
+  Enterprise SaaS via JSON-RPC.
+- `docs/ENTERPRISE_REFERENCE.md` — full protocol + schema reference:
+  every model, field, HTTP route, bus channel, and selection list the
+  upstream IoT Box expects. Includes the connection lifecycle diagram
+  and message-type dispatch table.
+- `docs/ROADMAP.md` — 12-phase plan toward Enterprise parity. Covers
+  hotfix → protocol parity → multi-transport → self-diagnose → 5 new
+  business addons (KDS, Quality, Self-Order, Events, Egypt fiscal) →
+  per-platform reverse-proxy docs → CI matrix. Calls out 4
+  vendor-locked modules we will *not* build.
+- `docs/KITCHEN_DISPLAY.md` — design doc for the upcoming
+  `filamind_kitchen_display` addon (replaces the Enterprise
+  `pos_restaurant_preparation_display` family).
+- README updated with prominent links to the four docs.
+
 ### Changed — repo layout (v0.3.1)
 - All four addons now live under a top-level `addons/` directory
   (matches Odoo core's bundled-addons convention).
